@@ -29,7 +29,7 @@ Distributed P2P chat application in P2P network.
 
 ## Architecture
 
-![](https://github.com/Distributed-Systeam/priva/tree/documentations/P2P%20network%20architecture.pdf)
+![Architecture pic](https://github.com/Distributed-Systeam/priva/blob/documentations/planning/P2P%20network%20architecture.pdf?raw=true)
 	
 
 ## Code implementation plan
