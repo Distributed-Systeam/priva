@@ -48,3 +48,16 @@ Distributed P2P chat application in P2P network.
 	- Direct messaging creates new neighbor if not already
 	
 - Threshold value for amount of neighbor nodes
+
+## Development
+
+Spin up a python virtual environment
+
+```bash
+# install venv python module
+> sudo apt install python3.8-venv
+# create the virtual environment
+> python3 -m venv venv
+# initiate the vitual environment
+> source venv/bin/activate
+```
