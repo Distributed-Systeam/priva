@@ -7,6 +7,28 @@ class Node (Node):
         super(Node, self).__init__(ipaddr, port, id, callback, max_connections)
         self.name = name
 
+    def init_conn(user_id):
+        nodeID = hash(user_id) # hash the user_id to get a unique nodeID
+        closest = closest_preceeding_node(nodeId) # check finger table
+        if (closest == nodeID):
+            #connect with node
+        self.connect_with_node(closest.ipaddr, closest.port) # connect to the closest node
+        self.send_to_node(closest, "I want to connect with nodeID", "my address info")
+
+    def msg_conn(node_id, node):
+        """This method is called when a node wants to connect with another node."""
+        #if Node in finger_tbl: # check if the node is already in the finger table
+          #  Node.node_id.node_msg(Node,Data)
+        #else:
+         #   max_finger_tbl = fingler_tbl[0] # get the first node in the finger table
+        #    max_finger_tbl.rote_conn(node_id, Node)
+      #  pass
+    def closest_preceeding_node(nodeId):
+        """Returns the closest node in the finger table that precedes the given nodeID."""
+        #for i in range(160, 0, -1):
+        #    if (fingerTable[i].nodeId < nodeId and fingerTable[i].nodeId > self.nodeId):
+        #        return fingerTable[i]
+    
     def outbound_node_connected(self, connected_node):
         print("outbound_node_connected: " + connected_node.id)
         
