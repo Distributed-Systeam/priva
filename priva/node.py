@@ -1,11 +1,31 @@
 import time
 from p2pnetwork.node import Node
+import random
+import hashlib
 
 class Node (Node):
     # Python class constructor
     def __init__(self, ipaddr, port, name, id=None, callback=None, max_connections=0):
         super(Node, self).__init__(ipaddr, port, id, callback, max_connections)
         self.name = name
+        self.user_id = name + '#' + str(random.randint(1, 999999))
+        self.node_id = self.get_node_id(self.user_id)
+        self.address = {
+            'IP': ipaddr,
+            'port': port
+        }
+        self.finger_table = []
+        self.predecessor = None
+
+    def get_node_id(self, user_id):
+        node_id = hashlib.sha512()
+        node_id.update(user_id.encode('ascii'))
+        node_id = node_id.hexdigest()
+        return node_id
+
+    def get_successor(self, node_id):
+        # TODO: retun successor of node_id
+        return None
 
     def init_conn(user_id):
         nodeID = hash(user_id) # hash the user_id to get a unique nodeID
