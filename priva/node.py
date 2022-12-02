@@ -1,5 +1,6 @@
 import time
 from p2pnetwork.node import Node
+from p2pnetwork.nodeconnection import NodeConnection
 import random
 import hashlib
 
@@ -24,18 +25,20 @@ class Node (Node):
         return node_id
 
     def get_successor(self, node_id):
-        # TODO: retun successor of node_id
+        # TODO: retun successor (address object) of node_id
         return None
 
-    def init_conn(user_id):
+    def init_conn(self, user_id):
         nodeID = hash(user_id) # hash the user_id to get a unique nodeID
-        closest = closest_preceeding_node(nodeId) # check finger table
+        closest = self.closest_preceeding_node(self.node_id) # check finger table
         if (closest == nodeID):
             #connect with node
+            pass
         self.connect_with_node(closest.ipaddr, closest.port) # connect to the closest node
         self.send_to_node(closest, "I want to connect with nodeID", "my address info")
+        self.disconnect_with_node(closest)
 
-    def msg_conn(node_id, node):
+    def msg_conn(self, node_id, node):
         """This method is called when a node wants to connect with another node."""
         #if Node in finger_tbl: # check if the node is already in the finger table
           #  Node.node_id.node_msg(Node,Data)
@@ -43,11 +46,13 @@ class Node (Node):
          #   max_finger_tbl = fingler_tbl[0] # get the first node in the finger table
         #    max_finger_tbl.rote_conn(node_id, Node)
       #  pass
-    def closest_preceeding_node(nodeId):
+
+    def closest_preceeding_node(self, nodeId):
         """Returns the closest node in the finger table that precedes the given nodeID."""
         #for i in range(160, 0, -1):
         #    if (fingerTable[i].nodeId < nodeId and fingerTable[i].nodeId > self.nodeId):
-        #        return fingerTable[i]
+        #        return fingerTable[i] # Node element
+        return 
     
     def outbound_node_connected(self, connected_node):
         print("outbound_node_connected: " + connected_node.id)
