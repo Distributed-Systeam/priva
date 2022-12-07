@@ -43,6 +43,8 @@ Available commands:
 
 {Fore.BLUE}connect username#1234{Style.RESET_ALL} || Start messaging with the peer username#1234.
 
+{Fore.BLUE}list{Style.RESET_ALL} || List your active sessions with peers.
+
 {Fore.BLUE}exit{Style.RESET_ALL} || Close the application and remove your identity from the network.
 
 =======================
@@ -53,6 +55,9 @@ while True:
     command = input('priva> ')
     if command == 'help' or not command:
         print(help_prompt)
+    if command == 'list' or not command:
+        print('Active sessions:')
+        # todo: list inbound and outbound nodes
     # handle command args
     elif len(command.split(' ')) > 1:
         # handle malformed commands
