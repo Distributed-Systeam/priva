@@ -1,8 +1,8 @@
-from node import Node
+from chord_node import ChordNode
 
-class MessagingNode (Node):
-    def __init__(self, ipaddr, port, name, id=None, callback=None, max_connections=0):
-        super(MessagingNode, self).__init__(ipaddr, port, name, id, callback, max_connections)
+class MessagingNode (ChordNode):
+    def __init__(self, ip_addr, port, name, id=None, callback=None, max_connections=0):
+        super(MessagingNode, self).__init__(ip_addr, port, name, id, callback, max_connections)
 
     # todo
     def join():
