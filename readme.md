@@ -48,3 +48,18 @@ Distributed P2P chat application in P2P network.
 	- Direct messaging creates new neighbor if not already
 	
 - Threshold value for amount of neighbor nodes
+
+## Usage
+
+Make sure you have [Tor browser](https://www.torproject.org/download/) on your computer and it has run at least once.
+
+Run priva
+```bash
+$ cd priva/
+$ python3 run.py
+```
+
+```bash
+# start messaging with a peer
+$ priva> connect username#1234
+```
