@@ -2,3 +2,4 @@ design.md
 venv
 env
 __pycache__
+.venv
