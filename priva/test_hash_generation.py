@@ -1,11 +1,23 @@
-import sys
-import time
-sys.path.insert(0, '..')
+from chord_node import ChordNode
 
-from messaging_node import MessagingNode
-from bootstrap_node import BootstrapNode
+node1 = ChordNode("localhost", 10001, 'node-1')
+node2 = ChordNode("localhost", 10002, 'node-2')
+node3 = ChordNode("localhost", 10003, 'node-3')
 
-b_node1 = BootstrapNode(ip_addr="localhost", port=10001, name='bootstrap-1')
+print("node1 node_id: ", node1.node_id)
+print("node2 node_id: ", node2.node_id)
+print("node3 node_id: ", node3.node_id)
 
-id = b_node1.ack_join('localhost', 10002, 'm_node-1')
-print(id)
+print("node1 user_id: ", node1.user_id)
+print("node2 user_id: ", node2.user_id)
+print("node3 user_id: ", node3.user_id)
+
+node1.join()
+node2.join()
+node3.join()
+
+print("node1 finger_table: ", node1.finger_table)
+print("node2 finger_table: ", node2.finger_table)
+print("node3 finger_table: ", node3.finger_table)
+
+print(node1.in_range(node1.node_id, node2.node_id, node3.node_id))
