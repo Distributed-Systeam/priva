@@ -12,9 +12,15 @@ import stun
 m = 10 # number of bits in the node ID, and the number of entries in the finger table
 s = 2**m # size of the ring
 
+# tor proxies
+proxies = {
+    'http': 'socks5://127.0.0.1:9050',
+    'https': 'socks5://127.0.0.1:9050'
+}
+
 class ChordNode(threading.Thread):
     # Python class constructor
-    def __init__(self, local_port, name):
+    def __init__(self, onion_addr, name):
         super(ChordNode, self).__init__(port, name)
         # basic variables
         self.terminate_flag = threading.Event() # Flag to indicate node termination
@@ -40,7 +46,7 @@ class ChordNode(threading.Thread):
     def get_local_address(self, local_port):
         hostname = socket.gethostname()
         local_ip = socket.gethostbyname(hostname)
-        return {'IP': local_ip, 'port': local_port}
+        return {'IP': local_ip, 'port': 80}
 
     def get_public_address(self):
         _, pub_ip, pub_port = stun.get_ip_info()
@@ -56,7 +62,8 @@ class ChordNode(threading.Thread):
         if node_id in self.finger_table:
             return self.finger_nodes[node_id]
         closest = self.finger_nodes[self.closest_preceeding_node(node_id)]
-        successor = requests.get('http://{}:{}/find_successor'.format(closest['IP'], closest['port']))
+        # todo: call successor
+        successor = requests.get('http://{}:{}/find_successor'.format(closest['IP'], proxies))
         return successor
 
     def in_range(self, a, b, c):
