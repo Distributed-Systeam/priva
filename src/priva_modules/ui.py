@@ -59,6 +59,7 @@ class UI():
             command = input('priva> ')
             if command == 'help' or not command:
                 print(help_prompt)
+                continue
             if command == 'list' or not command:
                 print('Active sessions:')
                 # todo: list inbound and outbound nodes
@@ -74,11 +75,14 @@ class UI():
                         # todo: handle conection not successful
                     else:
                         print(help_prompt)
+                        continue
                 except:
                     print(help_prompt)
+                    continue
             elif command == 'exit':
                 print('\nExiting gracefully...')
                 # todo: inform the network about leaving
                 break
             else:
                 print(help_prompt)
+        return 'exited'

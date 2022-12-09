@@ -1,4 +1,5 @@
 import os
+import sys
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import shutil
 import json
@@ -9,6 +10,7 @@ from threading import Thread
 from colorama import Fore, Style
 from time import sleep
 import logging
+import threading
 
 app = Flask(__name__)
 
@@ -21,14 +23,19 @@ def find_successor():
   return "<h1>Successor found!</h1>"
 
 onion_addr = None
+cntrl = None
+hidden_service_dir = None
 def start_server():
   with Controller.from_port() as controller:
+    global cntrl
+    cntrl = controller
     controller.authenticate()
 
     print(' * Connecting to tor...')
     # All hidden services have a directory on disk. Lets put ours in tor's data
     # directory.
 
+    global hidden_service_dir
     hidden_service_dir = os.path.join(controller.get_conf('DataDirectory', '/tmp'), 'priva')
 
     if os.path.isdir(hidden_service_dir):
@@ -61,7 +68,6 @@ def start_server():
       # Shut down the hidden service and clean it off disk. Note that you *don't*
       # want to delete the hidden service directory if you'd like to have this
       # same *.onion address in the future.
-
       print(" * Shutting down our hidden service")
       controller.remove_hidden_service(hidden_service_dir)
       shutil.rmtree(hidden_service_dir)
@@ -71,7 +77,18 @@ def start_server():
 # run the server in the background
 t = Thread(target=start_server)
 t.start()
+#e = threading.Event()
 sleep(1)
 if onion_addr:
   print(f" * Tor hidden service running at {onion_addr}")
-ui.UI.init_ui(onion_addr)
+status = ui.UI.init_ui(onion_addr)
+while True:
+  if status:
+    if status == 'exited':
+      print(" * Shutting down the hidden service & running cleanup")
+      print(f"\n{Fore.YELLOW}Press Ctrl + c to quit...")
+      # todo: kill the server thread
+      cntrl.remove_hidden_service(hidden_service_dir)
+      shutil.rmtree(hidden_service_dir)
+      sys.exit()
+      break

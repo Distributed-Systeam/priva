@@ -3,11 +3,8 @@ import requests
 import random
 import hashlib
 import threading
-import socket
 import json
 import sys
-import ipaddress
-import stun
 
 m = 10 # number of bits in the node ID, and the number of entries in the finger table
 s = 2**m # size of the ring
@@ -18,39 +15,22 @@ proxies = {
     'https': 'socks5://127.0.0.1:9050'
 }
 
-class ChordNode(threading.Thread):
+class ChordNode():
     # Python class constructor
     def __init__(self, onion_addr, name):
-        super(ChordNode, self).__init__(port, name)
         # basic variables
         self.terminate_flag = threading.Event() # Flag to indicate node termination
         self.name = name
+        self.onion_addr = onion_addr
         self.user_id = name + '#' + str(random.randint(1, 999999))
         self.node_id = self.get_node_id(self.user_id)
-        self.loc_address = self.get_local_address(local_port)
-        self.pub_address = self.get_public_address()
-        self.finger_table = []
-        self.predecessor = None
-        self.finger_nodes = {}
         self.next = 0
 
         # state variables
+        self.predecessor = None
+        self.finger_nodes = {}
+        self.finger_table = []
         self.msg_history = dict()
-
-        # connection varaibles
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.bind((self.loc_address['IP'], self.loc_address['port']))
-        self.sock.listen()
-
-    def get_local_address(self, local_port):
-        hostname = socket.gethostname()
-        local_ip = socket.gethostbyname(hostname)
-        return {'IP': local_ip, 'port': 80}
-
-    def get_public_address(self):
-        _, pub_ip, pub_port = stun.get_ip_info()
-        return {'IP': pub_ip, 'port': pub_port}
 
     def get_node_id(self, user_id: str):
         hash = hashlib.blake2b(digest_size=m)
