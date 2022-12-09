@@ -1,0 +1,16 @@
+- No centralized server
+- Distributed hash table to keep node information
+- States:
+	- Number of neighbor nodes
+	- Chat history
+	- Consensus on threshold value
+- Open network, anyone can join
+- Kepp track of nodes in network by pulling neighbor node information
+- Network can change (neighbor nodes)
+	- Direct messaging creates new neighbor if not already
+- Threshold value for amount of neighbor nodes
+- Language: python (javascript)
+- Libary to impelemnt network
+	- python-p2p-network (https://github.com/macsnoeren/python-p2p-network)
+- Use bootstrap nodes to initialize the p2p network
+	- When enough nodes have joined the network, these bootstrap nodes can be removed

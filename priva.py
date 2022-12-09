@@ -31,7 +31,7 @@ while True:
 # todo: call user_id generation
 tag = f'{username}#1234'
 print(f'\nYour tag is {Fore.GREEN}{tag}{Style.RESET_ALL}.')
-print('Start messaging with a peer by using their tag.')
+print(f'Start messaging with a peer by using their tag: {Fore.BLUE}connect {Fore.GREEN}username#1234{Style.RESET_ALL}.')
 
 print(f'\nType {Fore.BLUE}help{Style.RESET_ALL} to see available commands.\n')
 
