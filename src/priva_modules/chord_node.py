@@ -2,6 +2,7 @@ import requests
 import random
 import hashlib
 import threading
+import json
 
 m = 10 # number of bits in the node ID, and the number of entries in the finger table
 s = 2**m # size of the ring
@@ -20,9 +21,9 @@ class ChordNode():
         self.next = 0
 
         # state variables
-        self.predecessor = None
-        self.finger_nodes = {}
-        self.finger_table = []
+        self.predecessor = None # dict of predecessor node (node_id: onion_addr)
+        self.finger_nodes = {} # dict of finger nodes (node_id: onion_addr)
+        self.finger_table = [] # list of finger node ids
         self.msg_history = dict()
 
     def set_node_name(self, name):
@@ -50,58 +51,63 @@ class ChordNode():
     def find_successor(self, node_id):
         if node_id in self.finger_table:
             return self.finger_nodes[node_id]
-        closest = self.finger_nodes[self.closest_preceeding_node(node_id)]
-        successor = requests.get('http://{}/find_successor?succ_node_id={}'.format(closest['IP'], node_id), proxies)
+        closest_addr = self.finger_nodes[self.closest_preceeding_node(node_id)]
+        response = requests.get('http://{}/find_successor?succ_node_id={}'.format(closest_addr, node_id), proxies=proxies)
+        successor = json.load(response.json())
         return successor
 
     def in_range(self, a, b, c):
         a = a % s
         b = b % s
         c = c % s
-        print(a, b, c)
-        if b in range(a, c) or b in range(c, a):
-            return True
-        return False
+        return b in range(a, c) or b in range(c, a)
 
-    def closest_preceeding_node(self, nodeId: int):
+    def closest_preceeding_node(self, node_id: int):
         ft = self.finger_table
         for i in range(len(ft)-1, 0, -1):
-            if self.in_range(self.node_id, ft[i], nodeId):
+            if self.in_range(self.node_id, ft[i], node_id):
                 return ft[i]
         return ft[0] # if no node in range, return the successor
 
-    def join(self, address = None):
+    def join(self, onion_addr = None):
         """Join the network"""
-        if address:
-            response = requests.post('http://{}/join'.format(address['IP']), json={'node_id': self.node_id, "address": self.onion_addr}, proxies=proxies)
-            successor = response.json()
-            self.finger_table.append(successor['node_id'])
-            self.finger_nodes[successor['node_id']] = successor
-        else:
-            self.finger_table.append(self.node_id)
-            self.finger_nodes[self.node_id] = self.address
+        try:
+            if onion_addr:
+                response = requests.post('http://{}/join'.format(onion_addr), json={'node_id': self.node_id, "onion_addr": self.onion_addr}, proxies=proxies)
+                successor = json.load(response.json())
+                print(successor)
+                self.finger_table.append(successor['node_id'])
+                self.finger_nodes[successor['node_id']] = successor['onion_addr']
+            else:
+                self.finger_table.append(self.node_id)
+                self.finger_nodes[self.node_id] = self.onion_addr
+            return 'Joined the network'
+        except:
+            return 'Failed to join the network'
 
     def stabilize(self):
         """Stabilize the network"""
-        successor = self.finger_nodes[self.finger_table[0]]
-        response = requests.get('http://{}/get_predecessor'.format(successor['IP']), proxies=proxies)
-        predecessor = response.json()
+        succ_id = self.finger_table[0]
+        succ_addr = self.finger_nodes[succ_id]
+        response = requests.get('http://{}/get_predecessor'.format(succ_addr), proxies=proxies)
+        succ_pred = json.load(response.json())
         # is the successors predecessor in between me and my successor
-        if predecessor and self.in_range(self.node_id, predecessor['node_id'], successor['node_id']):
+        if succ_pred and self.in_range(self.node_id, succ_pred['node_id'], succ_id):
             # if so, set my successor to the successors predecessor
-            self.finger_table[0] = predecessor['node_id']
-            self.finger_nodes[predecessor['node_id']] = predecessor
-        # otherwise notify the successor that i am its predecessor
-        self.notify(self.finger_nodes[self.finger_table[0]])
+            self.finger_table[0] = succ_pred['node_id']
+            self.finger_nodes[succ_pred['node_id']] = succ_pred['onion_addr']
+        else:
+            # otherwise notify the successor that i am its predecessor
+            self.notify(self.finger_nodes[self.finger_table[0]])
 
-    def notify(self, node):
+    def notify(self, onion_addr):
         """Notify the node"""
-        requests.post('http://{}/notify'.format(node['IP']), json={'node_id': self.node_id, "address": self.onion_addr}, proxies=proxies)
+        requests.post('http://{}/notify'.format(onion_addr), json={'node_id': self.node_id, "onion_addr": self.onion_addr}, proxies=proxies)
     
-    def ack_notify(self, node_id, address):
+    def ack_notify(self, node_id, onion_addr):
         """Acknowledge the notification"""
         if not self.predecessor or self.in_range(self.predecessor['node_id'], node_id, self.node_id):
-            self.predecessor = {'node_id': node_id, 'address': address}
+            self.predecessor = {'node_id': node_id, 'onion_addr': onion_addr}
 
     def fix_fingers(self):
         """Fix the fingers"""
@@ -114,25 +120,6 @@ class ChordNode():
         """Check the predecessor"""
         if not self.predecessor:
             return
-        response = requests.get('http://{}/ping'.format(self.predecessor['IP']), proxies=proxies)
+        response = requests.get('http://{}/ping'.format(self.predecessor['onion_addr']), proxies=proxies)
         if response.status_code != 200:
             self.predecessor = None
-
-    def init_conn(self, user_id):
-        node_id = self.get_node_id(user_id) # hash the user_id to get a unique nodeID
-        closest = self.closest_preceeding_node(self.node_id) # check finger table
-        if (closest == node_id):
-            #connect with node
-            pass
-        self.connect_with_node(closest.ip_addr, closest.port) # connect to the closest node
-        self.send_to_node(closest, "I want to connect with nodeID", "my address info")
-        self.disconnect_with_node(closest)
-
-    def msg_conn(self, node_id, node):
-        """This method is called when a node wants to connect with another node."""
-        #if Node in finger_tbl: # check if the node is already in the finger table
-          #  Node.node_id.node_msg(Node,Data)
-        #else:
-         #   max_finger_tbl = fingler_tbl[0] # get the first node in the finger table
-        #    max_finger_tbl.rote_conn(node_id, Node)
-      #  pass
