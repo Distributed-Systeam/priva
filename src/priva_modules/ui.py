@@ -1,8 +1,5 @@
-from ensurepip import bootstrap
 from colorama import Fore, Style
 from priva_modules.chord_node import ChordNode
-
-bootstrap_onion = '7gvo5tqqotmkjswqowhw6k5htj5pf52fiss3ruer5g7trygbyi4lgiqd.onion'
 
 class UI():
     def init_ui(priva_node: ChordNode):
@@ -36,13 +33,14 @@ class UI():
 
         # todo: call user_id generation
         priva_node.set_node_name(username)
-        print('\nJoining the network...')
-        result = priva_node.join(bootstrap_onion)
-        if result == 'Failed to join the network':
-            print(f'\n{Fore.RED}Failed to join the network. Please try again later.{Style.RESET_ALL}\n')
-            return 'exited'
-        else:
-            print(f'\n{result}\n')
+        if username != 'bootstrap0':
+            print('\nJoining the network...')
+            result = priva_node.join()
+            if result == 'Failed to join the network':
+                print(f'\n{Fore.RED}Failed to join the network. Please try again later.{Style.RESET_ALL}\n')
+                return 'exited'
+            else:
+                print(f'\n{result}\n')
         tag = f'{priva_node.user_id}'
         print(f'\nYour tag is {Fore.GREEN}{tag}{Style.RESET_ALL}.')
         print(f'Start messaging with a peer by using their tag: {Fore.BLUE}connect {Fore.GREEN}username#1234{Style.RESET_ALL}.')
