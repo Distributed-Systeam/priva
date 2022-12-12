@@ -84,8 +84,8 @@ def start_server():
       onion_addr = onion
       priva_node = chord_node.ChordNode(onion_addr)
       #print(" * Priva is available at %s, press ctrl+c to quit" % result.hostname)
-    except:
-      print(" * Unable to determine our service's hostname.")
+    except Exception as e:
+      print(f"{Fore.RED} * Unable to determine our service's hostname: {e}{Style.RESET_ALL}")
 
     try:
       log = logging.getLogger('werkzeug')

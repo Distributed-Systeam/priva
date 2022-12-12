@@ -33,6 +33,14 @@ class UI():
 
         # todo: call user_id generation
         priva_node.set_node_name(username)
+        if username != 'bootstrap0':
+            print('\nJoining the network...')
+            result = priva_node.join()
+            if result == 'Failed to join the network':
+                print(f'\n{Fore.RED}Failed to join the network. Please try again later.{Style.RESET_ALL}\n')
+                return 'exited'
+            else:
+                print(f'\n{result}\n')
         tag = f'{priva_node.user_id}'
         print(f'\nYour tag is {Fore.GREEN}{tag}{Style.RESET_ALL}.')
         print(f'Start messaging with a peer by using their tag: {Fore.BLUE}connect {Fore.GREEN}username#1234{Style.RESET_ALL}.')
