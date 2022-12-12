@@ -2,7 +2,7 @@ from colorama import Fore, Style
 from priva_modules.chord_node import ChordNode
 
 class UI():
-    def init_ui(onion_addr):
+    def init_ui(priva_node: ChordNode):
         # print the banner
         print("""
                     _            
@@ -32,7 +32,7 @@ class UI():
                 break
 
         # todo: call user_id generation
-        priva_node = ChordNode(onion_addr, username)
+        priva_node.set_node_name(username)
         tag = f'{priva_node.user_id}'
         print(f'\nYour tag is {Fore.GREEN}{tag}{Style.RESET_ALL}.')
         print(f'Start messaging with a peer by using their tag: {Fore.BLUE}connect {Fore.GREEN}username#1234{Style.RESET_ALL}.')
@@ -64,6 +64,10 @@ class UI():
                 print('Active sessions:')
                 # todo: list inbound and outbound nodes
             # handle command args
+            elif command == 'node_info':
+                priva_node.node_info()
+            elif command == 'node_test':
+                priva_node.node_test()
             elif len(command.split(' ')) > 1:
                 # handle malformed commands
                 try:
