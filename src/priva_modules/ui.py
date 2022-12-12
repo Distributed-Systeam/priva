@@ -33,7 +33,7 @@ class UI():
 
         # todo: call user_id generation
         priva_node.set_node_name(username)
-        if username != 'bootstrap0':
+        if username != 'boot0':
             print('\nJoining the network...')
             result = priva_node.join()
             if result == 'Failed to join the network':
