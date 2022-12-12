@@ -1,10 +1,7 @@
-from hmac import digest_size
 import requests
 import random
 import hashlib
 import threading
-import json
-import sys
 
 m = 10 # number of bits in the node ID, and the number of entries in the finger table
 s = 2**m # size of the ring
@@ -16,14 +13,10 @@ proxies = {
 }
 
 class ChordNode():
-    # Python class constructor
-    def __init__(self, onion_addr, name):
+    def __init__(self, onion_addr):
         # basic variables
         self.terminate_flag = threading.Event() # Flag to indicate node termination
-        self.name = name
         self.onion_addr = onion_addr
-        self.user_id = name + '#' + str(random.randint(1, 999999))
-        self.node_id = self.get_node_id(self.user_id)
         self.next = 0
 
         # state variables
@@ -32,18 +25,33 @@ class ChordNode():
         self.finger_table = []
         self.msg_history = dict()
 
+    def set_node_name(self, name):
+        self.name = name
+        self.user_id = name + '#' + str(random.randint(1, 999999))
+        self.node_id = self.get_node_id(self.user_id)
+
     def get_node_id(self, user_id: str):
         hash = hashlib.blake2b(digest_size=m)
         hash.update(user_id.encode('utf-8'))
         node_id = int(hash.hexdigest(), 16)
         return node_id
 
+    def node_info(self):
+        print('\n=========')
+        print('name: {}'.format(self.name))
+        print('user_id: {}'.format(self.user_id))
+        print('node_id: {}'.format(self.node_id))
+        print('onion_addr: {}'.format(self.onion_addr))
+        print('=========\n')
+
+    def node_test(self):
+        print(requests.get('http://{}/find_successor?succ_node_id={}'.format(self.onion_addr, 'test_node_id'), proxies=proxies).text)
+
     def find_successor(self, node_id):
         if node_id in self.finger_table:
             return self.finger_nodes[node_id]
         closest = self.finger_nodes[self.closest_preceeding_node(node_id)]
-        # todo: call successor
-        successor = requests.get('http://{}:{}/find_successor'.format(closest['IP'], proxies))
+        successor = requests.get('http://{}/find_successor?succ_node_id={}'.format(closest['IP'], node_id), proxies)
         return successor
 
     def in_range(self, a, b, c):
@@ -65,7 +73,7 @@ class ChordNode():
     def join(self, address = None):
         """Join the network"""
         if address:
-            response = requests.get('http://{}:{}/find_successor'.format(address['IP'], address['port']))
+            response = requests.post('http://{}/join'.format(address['IP']), json={'node_id': self.node_id, "address": self.onion_addr}, proxies=proxies)
             successor = response.json()
             self.finger_table.append(successor['node_id'])
             self.finger_nodes[successor['node_id']] = successor
@@ -76,7 +84,7 @@ class ChordNode():
     def stabilize(self):
         """Stabilize the network"""
         successor = self.finger_nodes[self.finger_table[0]]
-        response = requests.get('http://{}:{}/get_predecessor'.format(successor['IP'], successor['port']))
+        response = requests.get('http://{}/get_predecessor'.format(successor['IP']), proxies=proxies)
         predecessor = response.json()
         # is the successors predecessor in between me and my successor
         if predecessor and self.in_range(self.node_id, predecessor['node_id'], successor['node_id']):
@@ -88,7 +96,7 @@ class ChordNode():
 
     def notify(self, node):
         """Notify the node"""
-        requests.post('http://{}:{}/notify'.format(node['IP'], node['port']), json={'node_id': self.node_id, "address": self.address})
+        requests.post('http://{}/notify'.format(node['IP']), json={'node_id': self.node_id, "address": self.onion_addr}, proxies=proxies)
     
     def ack_notify(self, node_id, address):
         """Acknowledge the notification"""
@@ -106,7 +114,7 @@ class ChordNode():
         """Check the predecessor"""
         if not self.predecessor:
             return
-        response = requests.get('http://{}:{}/ping'.format(self.predecessor['IP'], self.predecessor['port']))
+        response = requests.get('http://{}/ping'.format(self.predecessor['IP']), proxies=proxies)
         if response.status_code != 200:
             self.predecessor = None
 
@@ -128,28 +136,3 @@ class ChordNode():
          #   max_finger_tbl = fingler_tbl[0] # get the first node in the finger table
         #    max_finger_tbl.rote_conn(node_id, Node)
       #  pass
-
-    def outbound_node_connected(self, connected_node):
-        print("outbound_node_connected: " + connected_node.id)
-        
-    def inbound_node_connected(self, connected_node):
-        print("inbound_node_connected: " + connected_node.id)
-
-    def inbound_node_disconnected(self, connected_node):
-        print("inbound_node_disconnected: " + connected_node.id)
-
-    def outbound_node_disconnected(self, connected_node):
-        print("outbound_node_disconnected: " + connected_node.id)
-
-    def node_message(self, connected_node, data):
-        print("node_message from " + connected_node.id + ": " + str(data))
-        
-    def node_disconnect_with_outbound_node(self, connected_node):
-        print("node wants to disconnect with oher outbound node: " + connected_node.id)
-        
-    def node_request_to_stop(self):
-        print("node is requested to stop!")
-
-    def send_ping(self):
-        """A ping request is send to all the nodes that are connected."""
-        self.send_to_nodes('ping')
