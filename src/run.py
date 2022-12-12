@@ -106,3 +106,5 @@ if status == 'exited':
   cntrl.remove_hidden_service(hidden_service_dir)
   shutil.rmtree(hidden_service_dir)
   print(f"\n{Fore.YELLOW}Press Ctrl + c to quit...")
+  os._exit(0)
+  
