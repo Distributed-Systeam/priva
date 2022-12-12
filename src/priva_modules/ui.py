@@ -1,3 +1,4 @@
+from ensurepip import bootstrap
 from colorama import Fore, Style
 from priva_modules.chord_node import ChordNode
 
