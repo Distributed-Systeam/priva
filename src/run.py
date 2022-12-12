@@ -1,5 +1,5 @@
 import os
-import sys
+import json
 import shutil
 from stem.control import Controller
 from flask import Flask, request
@@ -32,7 +32,9 @@ def find_successor():
 
 @app.route('/join', methods=['POST'])
 def join():
-  return "<h1>You have called join method. The line is busy please wait...</h1>"
+  node_id = request.json['node_id']
+  successor = priva_node.find_successor(node_id)
+  return json.dumps(successor)
 
 @app.route('/notify', methods=['POST'])
 def notify():
@@ -55,19 +57,18 @@ def start_server():
     global hidden_service_dir
     hidden_service_dir = os.path.join(controller.get_conf('DataDirectory', '/tmp'), 'priva')
 
-    print(hidden_service_dir)
+    # THIS RESETS THE TOR CONFIGURATION
     #if os.path.isdir(hidden_service_dir):
     #  controller.remove_hidden_service(hidden_service_dir)
     #  shutil.rmtree(hidden_service_dir)
-
-    # Create a hidden service where visitors of port 80 get redirected to local
-    # port 5000 (this is where Flask runs by default).
 
     #print(" * Creating our hidden service in %s" % hidden_service_dir)
     try:
       global onion_addr
       global priva_node
       if not os.path.isdir(hidden_service_dir):
+        # Create a hidden service where visitors of port 80 get redirected to local
+        # port 5000 (this is where Flask runs by default).
         result = controller.create_hidden_service(hidden_service_dir, 80, target_port = 5000)
         f = open('.onion.txt', 'w')
         f.write(f'{result.hostname}')
@@ -109,8 +110,6 @@ if onion_addr:
   print(f" * Tor hidden service running at {onion_addr}")
 status = ui.UI.init_ui(priva_node)
 if status == 'exited':
-  print(" * Shutting down the hidden service & running cleanup\n")
-  cntrl.remove_hidden_service(hidden_service_dir)
-  shutil.rmtree(hidden_service_dir)
+  print(" * Shutting down the hidden service\n")
   os._exit(0)
   

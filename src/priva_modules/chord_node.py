@@ -33,6 +33,12 @@ class ChordNode():
         self.name = name
         self.user_id = name + '#' + str(random.randint(1, 999999))
         self.node_id = self.get_node_id(self.user_id)
+        if name == 'bootstrap1':
+            self.update_fingertable(self.node_id, self.onion_addr)
+
+    def update_fingertable(self, node_id, onion_addr, index=0,):
+        self.finger_table[index] = node_id
+        self.finger_nodes[node_id] = onion_addr
 
     def get_node_id(self, user_id: str):
         hash = hashlib.blake2b(digest_size=m)
@@ -52,6 +58,11 @@ class ChordNode():
         print(requests.get('http://{}/find_successor?succ_node_id={}'.format(bootstrap_onion, 'test_node_id'), proxies=proxies).text)
 
     def find_successor(self, node_id):
+        if len(self.finger_nodes) == 1:
+            return json.dumps({
+                "node_id": self.finger_table[0],
+                "onion_addr": self.finger_nodes[self.finger_table[0]]
+            })
         if node_id in self.finger_table:
             return self.finger_nodes[node_id]
         closest_addr = self.finger_nodes[self.closest_preceeding_node(node_id)]
