@@ -1,3 +1,4 @@
+from ensurepip import bootstrap
 import requests
 import random
 import hashlib
@@ -13,6 +14,8 @@ proxies = {
     'https': 'socks5h://127.0.0.1:9150'
 }
 
+bootstrap_onion = '7gvo5tqqotmkjswqowhw6k5htj5pf52fiss3ruer5g7trygbyi4lgiqd.onion'
+
 class ChordNode():
     def __init__(self, onion_addr):
         # basic variables
@@ -23,7 +26,7 @@ class ChordNode():
         # state variables
         self.predecessor = None # dict of predecessor node (node_id: onion_addr)
         self.finger_nodes = {} # dict of finger nodes (node_id: onion_addr)
-        self.finger_table = [] # list of finger node ids
+        self.finger_table = [0] * m # list of finger node ids
         self.msg_history = dict()
 
     def set_node_name(self, name):
@@ -46,14 +49,14 @@ class ChordNode():
         print('=========\n')
 
     def node_test(self):
-        print(requests.get('http://{}/find_successor?succ_node_id={}'.format(self.onion_addr, 'test_node_id'), proxies=proxies).text)
+        print(requests.get('http://{}/find_successor?succ_node_id={}'.format(bootstrap_onion, 'test_node_id'), proxies=proxies).text)
 
     def find_successor(self, node_id):
         if node_id in self.finger_table:
             return self.finger_nodes[node_id]
         closest_addr = self.finger_nodes[self.closest_preceeding_node(node_id)]
         response = requests.get('http://{}/find_successor?succ_node_id={}'.format(closest_addr, node_id), proxies=proxies)
-        successor = json.load(response.json())
+        successor = response.json()
         return successor
 
     def in_range(self, a, b, c):
@@ -69,20 +72,17 @@ class ChordNode():
                 return ft[i]
         return ft[0] # if no node in range, return the successor
 
-    def join(self, onion_addr = None):
+    def join(self, onion_addr):
         """Join the network"""
         try:
-            if onion_addr:
-                response = requests.post('http://{}/join'.format(onion_addr), json={'node_id': self.node_id, "onion_addr": self.onion_addr}, proxies=proxies)
-                successor = json.load(response.json())
-                print(successor)
-                self.finger_table.append(successor['node_id'])
-                self.finger_nodes[successor['node_id']] = successor['onion_addr']
-            else:
-                self.finger_table.append(self.node_id)
-                self.finger_nodes[self.node_id] = self.onion_addr
+            response = requests.post('http://{}/join'.format(onion_addr), json={'node_id': self.node_id, "onion_addr": self.onion_addr}, proxies=proxies)
+            successor = json.loads(response.json())
+            print(f'\nsuccessor: {successor}, {type(successor)}')
+            self.finger_table[0] = successor['node_id']
+            self.finger_nodes[successor['node_id']] = successor['onion_addr']
             return 'Joined the network'
-        except:
+        except Exception as e:
+            print(e)
             return 'Failed to join the network'
 
     def stabilize(self):
@@ -90,7 +90,7 @@ class ChordNode():
         succ_id = self.finger_table[0]
         succ_addr = self.finger_nodes[succ_id]
         response = requests.get('http://{}/get_predecessor'.format(succ_addr), proxies=proxies)
-        succ_pred = json.load(response.json())
+        succ_pred = response.json()
         # is the successors predecessor in between me and my successor
         if succ_pred and self.in_range(self.node_id, succ_pred['node_id'], succ_id):
             # if so, set my successor to the successors predecessor
@@ -113,7 +113,7 @@ class ChordNode():
         """Fix the fingers"""
         self.next = self.next + 1
         if self.next >= m:
-            self.next = 1
+            self.next = 0
         self.finger_table[self.next] = self.find_successor(self.node_id + 2**(self.next-1))
 
     def check_predecessor(self):
