@@ -2,8 +2,6 @@ from ensurepip import bootstrap
 from colorama import Fore, Style
 from priva_modules.chord_node import ChordNode
 
-bootstrap_onion = '7gvo5tqqotmkjswqowhw6k5htj5pf52fiss3ruer5g7trygbyi4lgiqd.onion'
-
 class UI():
     def init_ui(priva_node: ChordNode):
         # print the banner
@@ -37,7 +35,7 @@ class UI():
         # todo: call user_id generation
         priva_node.set_node_name(username)
         print('\nJoining the network...')
-        result = priva_node.join(bootstrap_onion)
+        result = priva_node.join()
         if result == 'Failed to join the network':
             print(f'\n{Fore.RED}Failed to join the network. Please try again later.{Style.RESET_ALL}\n')
             return 'exited'

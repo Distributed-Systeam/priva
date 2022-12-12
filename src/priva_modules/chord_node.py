@@ -14,7 +14,7 @@ proxies = {
     'https': 'socks5h://127.0.0.1:9150'
 }
 
-bootstrap_onion = '7gvo5tqqotmkjswqowhw6k5htj5pf52fiss3ruer5g7trygbyi4lgiqd.onion'
+bootstrap_onion = 'sjbbcqce5l2wfrsjwyey2nanps6c2w7b364q24pfke3wtj2d7uulxmyd.onion'
 
 class ChordNode():
     def __init__(self, onion_addr):
@@ -72,7 +72,7 @@ class ChordNode():
                 return ft[i]
         return ft[0] # if no node in range, return the successor
 
-    def join(self, onion_addr):
+    def join(self, onion_addr = bootstrap_onion):
         """Join the network"""
         try:
             response = requests.post('http://{}/join'.format(onion_addr), json={'node_id': self.node_id, "onion_addr": self.onion_addr}, proxies=proxies)
