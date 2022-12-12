@@ -110,7 +110,7 @@ class UI():
                     print(help_prompt)
                     continue
             elif command == 'exit':
-                print('\nExiting gracefully...')
+                print('Exiting gracefully...')
                 # todo: inform the network about leaving
                 break
             else:
