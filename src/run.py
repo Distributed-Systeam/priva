@@ -81,7 +81,6 @@ def start_server():
     try:
       f = open('.onion.txt', 'r')
       onion = f.readline()
-      print(onion)
       onion_addr = onion
       priva_node = chord_node.ChordNode(onion_addr)
       #print(" * Priva is available at %s, press ctrl+c to quit" % result.hostname)
