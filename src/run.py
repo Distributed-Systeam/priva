@@ -102,9 +102,8 @@ if onion_addr:
   print(f" * Tor hidden service running at {onion_addr}")
 status = ui.UI.init_ui(priva_node)
 if status == 'exited':
-  print(" * Shutting down the hidden service & running cleanup")
+  print(" * Shutting down the hidden service & running cleanup\n")
   cntrl.remove_hidden_service(hidden_service_dir)
   shutil.rmtree(hidden_service_dir)
-  print(f"\n{Fore.YELLOW}Press Ctrl + c to quit...")
   os._exit(0)
   
