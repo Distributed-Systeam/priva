@@ -45,11 +45,13 @@ class UI():
         =======================
         Available commands:
 
-        {Fore.BLUE}connect username#1234{Style.RESET_ALL} || Start messaging with the peer username#1234.
+        {Fore.BLUE}connect username#1234{Style.RESET_ALL} - Start messaging with the peer username#1234.
 
-        {Fore.BLUE}list{Style.RESET_ALL} || List your active sessions with peers.
+        {Fore.BLUE}list{Style.RESET_ALL} - Show your contacts list.
 
-        {Fore.BLUE}exit{Style.RESET_ALL} || Close the application and remove your identity from the network.
+        {Fore.BLUE}tag{Style.RESET_ALL} - Show your own tag.
+
+        {Fore.BLUE}exit{Style.RESET_ALL} - Reset the tor configuration & close the application.
 
         =======================
         """
@@ -59,10 +61,17 @@ class UI():
             command = input('priva> ')
             if command == 'help' or not command:
                 print(help_prompt)
+            if command == 'list':
+                print('\nContacts list:')
+                print('===============\n')
+                f = open('.contacts_list.txt', 'r')
+                contacts = f.readlines()
+                for c in contacts:
+                    print(f'{Fore.GREEN}{c}{Style.RESET_ALL}')
+                print('===============')
                 continue
-            if command == 'list' or not command:
-                print('Active sessions:')
-                # todo: list inbound and outbound nodes
+            if command == 'tag':
+                print(f'\n{Fore.GREEN}{tag}{Style.RESET_ALL}\n')
             # handle command args
             elif command == 'node_info':
                 priva_node.node_info()
@@ -74,9 +83,26 @@ class UI():
                     body = command.split(' ')[0]
                     args = command.split(' ')[1]
                     if body == 'connect' and '#' in args:
-                        print(f'\nConnecting to {args}...')
+                        print(f'\nConnecting...')
                         # todo: establish a connection with the peer
-                        # todo: handle conection not successful
+                        print(f'{Fore.GREEN}Connected to {args}.{Style.RESET_ALL}\n')
+                        print(f'Type {Fore.BLUE}back{Style.RESET_ALL} to exit the chat.\n')
+                        # todo: logic for connection successful or not 
+                        connection_successful = True
+                        if (connection_successful):
+                            # save the contact
+                            f = open('.contacts_list.txt', 'a')
+                            f.write(f'{args}\n')
+                            f.close()
+                            while True:
+                                # show user_id of the peer so that the user knows who they are messaging with atm
+                                msg = input(f'priva({Fore.GREEN}{args}{Style.RESET_ALL})> ')
+                                if msg == 'back':
+                                    break
+                        else:
+                            # todo: handle conection not successful
+                            print(f'{Fore.Red}Connection failed.{Style.RESET_ALL}\n')
+                            print(f'{Fore.GREEN}{args}{Style.RESET_ALL} might not be online.\n')
                     else:
                         print(help_prompt)
                         continue

@@ -101,13 +101,8 @@ sleep(1)
 if onion_addr:
   print(f" * Tor hidden service running at {onion_addr}")
 status = ui.UI.init_ui(priva_node)
-while True:
-  if status:
-    if status == 'exited':
-      print(" * Shutting down the hidden service & running cleanup")
-      print(f"\n{Fore.YELLOW}Press Ctrl + c to quit...")
-      # todo: kill the server thread
-      cntrl.remove_hidden_service(hidden_service_dir)
-      shutil.rmtree(hidden_service_dir)
-      sys.exit()
-      break
+if status == 'exited':
+  print(" * Shutting down the hidden service & running cleanup")
+  cntrl.remove_hidden_service(hidden_service_dir)
+  shutil.rmtree(hidden_service_dir)
+  print(f"\n{Fore.YELLOW}Press Ctrl + c to quit...")
