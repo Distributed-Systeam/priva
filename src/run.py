@@ -55,9 +55,10 @@ def start_server():
     global hidden_service_dir
     hidden_service_dir = os.path.join(controller.get_conf('DataDirectory', '/tmp'), 'priva')
 
-    if os.path.isdir(hidden_service_dir):
-      controller.remove_hidden_service(hidden_service_dir)
-      shutil.rmtree(hidden_service_dir)
+    print(hidden_service_dir)
+    #if os.path.isdir(hidden_service_dir):
+    #  controller.remove_hidden_service(hidden_service_dir)
+    #  shutil.rmtree(hidden_service_dir)
 
     # Create a hidden service where visitors of port 80 get redirected to local
     # port 5000 (this is where Flask runs by default).
@@ -66,18 +67,24 @@ def start_server():
     try:
       global onion_addr
       global priva_node
-      result = controller.create_hidden_service(hidden_service_dir, 80, target_port = 5000)
+      if not os.path.isdir(hidden_service_dir):
+        result = controller.create_hidden_service(hidden_service_dir, 80, target_port = 5000)
+        f = open('.onion.txt', 'w')
+        f.write(f'{result.hostname}')
+        f.close()
     except:
       print(f"{Fore.RED}* Error: cannot start tor hidden service!{Style.RESET_ALL}")
+      
     # The hostname is only available when we can read the hidden service
     # directory. This requires us to be running with the same user as tor.
-
-    if result.hostname:
-      onion_addr = result.hostname
+    try:
+      f = open('.onion.txt', 'r')
+      onion = f.readline()
+      onion_addr = onion
       priva_node = chord_node.ChordNode(onion_addr)
       #print(" * Priva is available at %s, press ctrl+c to quit" % result.hostname)
-    else:
-      print(" * Unable to determine our service's hostname, probably due to being unable to read the hidden service directory")
+    except:
+      print(" * Unable to determine our service's hostname.")
 
     try:
       log = logging.getLogger('werkzeug')
