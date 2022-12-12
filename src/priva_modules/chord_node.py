@@ -30,10 +30,10 @@ class ChordNode():
         self.name = name
         self.user_id = name + '#' + str(random.randint(1, 999999))
         self.node_id = self.get_node_id(self.user_id)
-        if name == 'bootstrap1':
+        if name == 'boot0':
             self.update_fingertable(self.node_id, self.onion_addr)
 
-    def update_fingertable(self, node_id, onion_addr, index=0,):
+    def update_fingertable(self, node_id, onion_addr, index=0):
         self.finger_table[index] = node_id
         self.finger_nodes[node_id] = onion_addr
 
