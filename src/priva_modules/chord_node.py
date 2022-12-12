@@ -4,6 +4,7 @@ import random
 import hashlib
 import threading
 import json
+from random import choice
 
 m = 10 # number of bits in the node ID, and the number of entries in the finger table
 s = 2**m # size of the ring
@@ -13,8 +14,6 @@ proxies = {
     'http': 'socks5h://127.0.0.1:9150',
     'https': 'socks5h://127.0.0.1:9150'
 }
-
-bootstrap_onion = '7gvo5tqqotmkjswqowhw6k5htj5pf52fiss3ruer5g7trygbyi4lgiqd.onion'
 
 class ChordNode():
     def __init__(self, onion_addr):
@@ -33,7 +32,7 @@ class ChordNode():
         self.name = name
         self.user_id = name + '#' + str(random.randint(1, 999999))
         self.node_id = self.get_node_id(self.user_id)
-        if name == 'bootstrap1':
+        if name == 'bootstrap0':
             self.update_fingertable(self.node_id, self.onion_addr)
 
     def update_fingertable(self, node_id, onion_addr, index=0,):
@@ -55,7 +54,7 @@ class ChordNode():
         print('=========\n')
 
     def node_test(self):
-        print(requests.get('http://{}/find_successor?succ_node_id={}'.format(bootstrap_onion, 'test_node_id'), proxies=proxies).text)
+        print(requests.get('http://{}/find_successor?succ_node_id={}'.format(self.get_bootstrap_address, 'test_node_id'), proxies=proxies).text)
 
     def find_successor(self, node_id):
         if len(self.finger_nodes) == 1:
@@ -83,12 +82,21 @@ class ChordNode():
                 return ft[i]
         return ft[0] # if no node in range, return the successor
 
-    def join(self, onion_addr):
+    def get_bootstrap_address(self):
+        onion_addresses= [
+            'w73dq75dnv7ofzigkjlavo7onte4utukdqzi4c5svkgpyunmsko4ityd.onion',
+            '745ygnlnem2dzsunhit2grzs77zwao6czt7kepgqfcxdwood7bpf7tad.onion'
+            ]
+        onion_addr = choice(onion_addresses)
+        while onion_addr == self.onion_addr:
+            onion_addr = choice(onion_addresses)
+        return onion_addr
+    
+    def join(self):
         """Join the network"""
         try:
-            response = requests.post('http://{}/join'.format(onion_addr), json={'node_id': self.node_id, "onion_addr": self.onion_addr}, proxies=proxies)
+            response = requests.post('http://{}/join'.format(self.get_bootstrap_address), json={'node_id': self.node_id, "onion_addr": self.onion_addr}, proxies=proxies)
             successor = json.loads(response.json())
-            print(f'\nsuccessor: {successor}, {type(successor)}')
             self.finger_table[0] = successor['node_id']
             self.finger_nodes[successor['node_id']] = successor['onion_addr']
             return 'Joined the network'
