@@ -124,7 +124,14 @@ class UI():
                                     break
                                 # todo: fetch correct onion address
                                 # onion_addr = priva_node.msg_conn(args)
-                                requests.post('http://yx6oq7hgqvtljutaxh47ux7nsvtmgimgjl6ycpw7qnf5mgcm66xbo4ad.onion/message', json={'node_id':tag, 'msg': msg}, proxies=proxies)
+                                res = requests.post('http://yx6oq7hgqvtljutaxh47ux7nsvtmgimgjl6ycpw7qnf5mgcm66xbo4ad.onion/message', json={'node_id':tag, 'msg': msg}, proxies=proxies) # node_id == sender
+                                # save sent message to msg_history
+                                if res.text == 'message received':
+                                    msg_history = priva_node.get_msg_history(args)
+                                    if msg_history == None:
+                                      priva_node.msg_history[args] = [f'{tag}: {msg}']
+                                    else:
+                                      priva_node.msg_history[args].append(f'{tag}: {msg}')
                         else:
                             # todo: handle conection not successful
                             print(f'{Fore.Red}Connection failed.{Style.RESET_ALL}\n')
