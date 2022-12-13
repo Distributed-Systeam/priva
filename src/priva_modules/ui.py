@@ -117,6 +117,7 @@ class UI():
                                 if msg == 'back':
                                     break
                                 # todo: fetch correct onion address
+                                # onion_addr = priva_node.msg_conn(args)
                                 requests.post('http://6ivr3bv3yihhto5bivyedkrmxhmxw625upzk7xvytntxn6dnbown5qyd.onion/message', json={'node_id':tag, 'msg': msg}, proxies=proxies)
                         else:
                             # todo: handle conection not successful
