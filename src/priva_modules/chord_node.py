@@ -29,6 +29,8 @@ class ChordNode():
         self.finger_nodes = {} # dict of finger nodes (node_id: onion_addr)
         self.finger_table = [0] * m # list of finger node ids
         self.msg_history = dict()
+        self.last_message = ''
+        self.current_msg_peer = ''
 
     def set_node_name(self, name):
         self.name = name
@@ -135,3 +137,10 @@ class ChordNode():
         response = requests.get('http://{}/ping'.format(self.predecessor['onion_addr']), proxies=proxies)
         if response.status_code != 200:
             self.predecessor = None
+
+    def get_msg_history(self, peer):
+        try:
+            msg_history = self.msg_history[peer]
+            return msg_history
+        except KeyError:
+            return None
