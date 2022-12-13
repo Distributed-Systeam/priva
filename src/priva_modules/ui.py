@@ -1,6 +1,13 @@
 from ensurepip import bootstrap
 from colorama import Fore, Style
 from priva_modules.chord_node import ChordNode
+import requests
+
+# tor proxies
+proxies = {
+    'http': 'socks5h://127.0.0.1:9150',
+    'https': 'socks5h://127.0.0.1:9150'
+}
 
 class UI():
     def init_ui(priva_node: ChordNode):
@@ -40,8 +47,9 @@ class UI():
             if result == 'Failed to join the network':
                 print(f'\n{Fore.RED}Failed to join the network. Please try again later.{Style.RESET_ALL}\n')
                 return 'exited'
+            # join successful
             else:
-                print(f'\n{result}\n')
+                print(f'{Fore.GREEN}{result}{Style.RESET_ALL}')
         tag = f'{priva_node.user_id}'
         print(f'\nYour tag is {Fore.GREEN}{tag}{Style.RESET_ALL}.')
         print(f'Start messaging with a peer by using their tag: {Fore.BLUE}connect {Fore.GREEN}username#1234{Style.RESET_ALL}.')
@@ -105,9 +113,12 @@ class UI():
                             f.close()
                             while True:
                                 # show user_id of the peer so that the user knows who they are messaging with atm
-                                msg = input(f'priva({Fore.GREEN}{args}{Style.RESET_ALL})> ')
+                                msg = input('')
                                 if msg == 'back':
                                     break
+                                # todo: fetch correct onion address
+                                # onion_addr = priva_node.msg_conn(args)
+                                requests.post('http://6ivr3bv3yihhto5bivyedkrmxhmxw625upzk7xvytntxn6dnbown5qyd.onion/message', json={'node_id':tag, 'msg': msg}, proxies=proxies)
                         else:
                             # todo: handle conection not successful
                             print(f'{Fore.Red}Connection failed.{Style.RESET_ALL}\n')

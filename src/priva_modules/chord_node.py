@@ -15,7 +15,7 @@ proxies = {
     'https': 'socks5h://127.0.0.1:9150'
 }
 
-bootstrap_onion = 'sjbbcqce5l2wfrsjwyey2nanps6c2w7b364q24pfke3wtj2d7uulxmyd.onion'
+bootstrap_onion = '6ivr3bv3yihhto5bivyedkrmxhmxw625upzk7xvytntxn6dnbown5qyd.onion/'
 
 class ChordNode():
     def __init__(self, onion_addr):
@@ -89,13 +89,12 @@ class ChordNode():
         try:
             response = requests.post('http://{}/join'.format(onion_addr), json={'node_id': self.node_id, "onion_addr": self.onion_addr}, proxies=proxies)
             successor = json.loads(response.json())
-            print(f'\nsuccessor: {successor}, {type(successor)}')
             self.finger_table[0] = successor['node_id']
             self.finger_nodes[successor['node_id']] = successor['onion_addr']
-            return 'Joined the network'
+            return 'Joined the network.'
         except Exception as e:
             print(e)
-            return 'Failed to join the network'
+            return 'Failed to join the network.'
 
     def stabilize(self):
         """Stabilize the network"""
