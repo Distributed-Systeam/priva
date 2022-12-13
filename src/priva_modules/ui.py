@@ -114,8 +114,9 @@ class UI():
                             f.close()
                             # print message history with the peer
                             msg_history = priva_node.get_msg_history(args)
-                            for m in msg_history:
-                                print(m)
+                            if msg_history != None:
+                                for m in msg_history:
+                                    print(m)
                             while True:
                                 # show user_id of the peer so that the user knows who they are messaging with atm
                                 msg = input('')
@@ -123,7 +124,7 @@ class UI():
                                     break
                                 # todo: fetch correct onion address
                                 # onion_addr = priva_node.msg_conn(args)
-                                requests.post('http://6ivr3bv3yihhto5bivyedkrmxhmxw625upzk7xvytntxn6dnbown5qyd.onion/message', json={'node_id':tag, 'msg': msg}, proxies=proxies)
+                                requests.post('http://yx6oq7hgqvtljutaxh47ux7nsvtmgimgjl6ycpw7qnf5mgcm66xbo4ad.onion/message', json={'node_id':tag, 'msg': msg}, proxies=proxies)
                         else:
                             # todo: handle conection not successful
                             print(f'{Fore.Red}Connection failed.{Style.RESET_ALL}\n')
@@ -131,8 +132,8 @@ class UI():
                     else:
                         print(help_prompt)
                         continue
-                except:
-                    print(help_prompt)
+                except Exception as e:
+                    print(f'{Fore.RED}Error: {e}{Style.RESET_ALL}\n')
                     continue
             elif command == 'exit':
                 print('Exiting gracefully...')

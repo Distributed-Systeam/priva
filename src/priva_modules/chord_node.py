@@ -15,7 +15,7 @@ proxies = {
     'https': 'socks5h://127.0.0.1:9150'
 }
 
-bootstrap_onion = '6ivr3bv3yihhto5bivyedkrmxhmxw625upzk7xvytntxn6dnbown5qyd.onion/'
+bootstrap_onion = 'yx6oq7hgqvtljutaxh47ux7nsvtmgimgjl6ycpw7qnf5mgcm66xbo4ad.onion'
 
 class ChordNode():
     def __init__(self, onion_addr):
