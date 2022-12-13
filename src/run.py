@@ -8,6 +8,7 @@ from threading import Thread
 from colorama import Fore, Style
 from time import sleep
 import logging
+import json
 
 onion_addr = None
 priva_node = None
@@ -43,6 +44,22 @@ def notify():
 @app.route('/ping', methods=['GET'])
 def ping():
   return "<h1>I have been pinged!</h1>"
+
+@app.route('/message', methods=['POST'])
+def message():
+  data = request.get_json()
+  # todo: add message to msg_history
+  msg = data['msg']
+  priva_node.last_message = msg
+  msg_from = data['node_id']
+  msg_history = priva_node.get_msg_history(msg_from)
+  if msg_history == None:
+    priva_node.msg_history[msg_from] = [f'{msg_from}: {msg}']
+  else:
+    priva_node.msg_history[msg_from].append(f'{msg_from}: {msg}')
+  if priva_node.current_msg_peer == msg_from:
+    print(f'{Fore.BLUE}{msg_from}{Style.RESET_ALL}: {msg}')
+  return 'message received'
 
 def start_server():
   with Controller.from_port() as controller:

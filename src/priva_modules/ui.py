@@ -102,15 +102,20 @@ class UI():
                     if body == 'connect' and '#' in args:
                         print(f'\nConnecting...')
                         # todo: establish a connection with the peer
-                        print(f'{Fore.GREEN}Connected to {args}.{Style.RESET_ALL}\n')
+                        print(f'{Fore.GREEN}Connected to {args}{Style.RESET_ALL}\n')
                         print(f'Type {Fore.BLUE}back{Style.RESET_ALL} to exit the chat.\n')
                         # todo: logic for connection successful or not 
                         connection_successful = True
                         if (connection_successful):
+                            priva_node.current_msg_peer = args
                             # save the contact
                             f = open('.contacts_list.txt', 'a')
                             f.write(f'{args}\n')
                             f.close()
+                            # print message history with the peer
+                            msg_history = priva_node.get_msg_history(args)
+                            for m in msg_history:
+                                print(m)
                             while True:
                                 # show user_id of the peer so that the user knows who they are messaging with atm
                                 msg = input('')
