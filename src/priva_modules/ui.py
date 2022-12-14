@@ -1,7 +1,6 @@
-from ensurepip import bootstrap
 from colorama import Fore, Style
 from priva_modules.chord_node import ChordNode
-import requests
+from priva_modules import services
 
 # tor proxies
 proxies = {
@@ -10,7 +9,7 @@ proxies = {
 }
 
 class UI():
-    def init_ui(priva_node: ChordNode):
+    def init_ui(self, priva_node: ChordNode):
         # print the banner
         print("""
                     _            
@@ -41,15 +40,14 @@ class UI():
 
         # todo: call user_id generation
         priva_node.set_node_name(username)
-        if username != 'boot0':
-            print('\nJoining the network...')
-            result = priva_node.join()
-            if result == 'Failed to join the network':
-                print(f'\n{Fore.RED}Failed to join the network. Please try again later.{Style.RESET_ALL}\n')
-                return 'exited'
-            # join successful
-            else:
-                print(f'{Fore.GREEN}{result}{Style.RESET_ALL}')
+        print('\nJoining the network...')
+        result = priva_node.join()
+        if result == 'Failed to join the network.':
+            print(f'\n{Fore.RED}Failed to join the network. Please try again later.{Style.RESET_ALL}\n')
+            return 'exited'
+        # join successful
+        else:
+            print(f'{Fore.GREEN}{result}{Style.RESET_ALL}')
         tag = f'{priva_node.user_id}'
         print(f'\nYour tag is {Fore.GREEN}{tag}{Style.RESET_ALL}.')
         print(f'Start messaging with a peer by using their tag: {Fore.BLUE}connect {Fore.GREEN}username#1234{Style.RESET_ALL}.')
@@ -124,9 +122,10 @@ class UI():
                                     break
                                 # todo: fetch correct onion address
                                 # onion_addr = priva_node.msg_conn(args)
-                                res = requests.post('http://yx6oq7hgqvtljutaxh47ux7nsvtmgimgjl6ycpw7qnf5mgcm66xbo4ad.onion/message', json={'node_id':tag, 'msg': msg}, proxies=proxies) # node_id == sender
+                                addr = 'http://yx6oq7hgqvtljutaxh47ux7nsvtmgimgjl6ycpw7qnf5mgcm66xbo4ad.onion'
+                                res = services.send_message(addr, tag, msg)
                                 # save sent message to msg_history
-                                if res.text == 'message received':
+                                if res == 'message received':
                                     msg_history = priva_node.get_msg_history(args)
                                     if msg_history == None:
                                       priva_node.msg_history[args] = [f'{tag}: {msg}']
@@ -134,7 +133,7 @@ class UI():
                                       priva_node.msg_history[args].append(f'{tag}: {msg}')
                         else:
                             # todo: handle conection not successful
-                            print(f'{Fore.Red}Connection failed.{Style.RESET_ALL}\n')
+                            print(f'{Fore.RED}Connection failed.{Style.RESET_ALL}\n')
                             print(f'{Fore.GREEN}{args}{Style.RESET_ALL} might not be online.\n')
                     else:
                         print(help_prompt)
