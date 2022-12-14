@@ -99,10 +99,12 @@ class UI():
                     args = command.split(' ')[1]
                     if body == 'connect' and '#' in args:
                         print(f'\nConnecting...')
+                        addr = '7iwcz6yza5b3x74zvmfkbtafrsrkbfnaluzv4dy6p26llrq5vlvw64qd.onion'
                         # todo: establish a connection with the peer
                         print(f'{Fore.GREEN}Connected to {args}{Style.RESET_ALL}\n')
                         print(f'Type {Fore.BLUE}back{Style.RESET_ALL} to exit the chat.\n')
                         # todo: logic for connection successful or not 
+                        priva_node.send_connect(addr, tag)
                         connection_successful = True
                         if (connection_successful):
                             priva_node.current_msg_peer = args
@@ -122,7 +124,6 @@ class UI():
                                     break
                                 # todo: fetch correct onion address
                                 # onion_addr = priva_node.msg_conn(args)
-                                addr = '7iwcz6yza5b3x74zvmfkbtafrsrkbfnaluzv4dy6p26llrq5vlvw64qd.onion'
                                 res = services.send_message(addr, tag, msg)
                                 # save sent message to msg_history
                                 if res == 'message received':

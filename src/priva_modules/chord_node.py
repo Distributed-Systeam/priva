@@ -58,6 +58,10 @@ class ChordNode():
         print('onion_addr: {}'.format(self.onion_addr))
         print('=========\n')
 
+    def send_connect(self, addr, tag):
+        res = services.send_connect(addr, tag)
+        self.current_msg_peer = res['user_id']
+
     def node_test(self):
         print(services.test(bootstrap_onion, self.node_id))
 
