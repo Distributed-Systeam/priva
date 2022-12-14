@@ -12,15 +12,16 @@ def test(onion_addr: str, node_id: int):
 
 def find_successor(onion_addr: str, node_id: int):
     res = requests.get('http://{}/find_successor?succ_node_id={}'.format(onion_addr, node_id), proxies=proxies)
-    return json.loads(res.json())
+    return res.json()
 
 def join(boot_addr: str,  self_addr: str, node_id: int):
     res = requests.post('http://{}/join'.format(boot_addr), json={'node_id': node_id, "onion_addr": self_addr}, proxies=proxies)
-    return json.loads(res.json())
+    print('SERVICE JOIN: {}'.format(res))
+    return res.json()
 
 def get_predecessor(onion_addr: str):
     res = requests.get('http://{}/get_predecessor'.format(onion_addr), proxies=proxies)
-    return json.loads(res.json())
+    return res.json()
 
 def notify(boot_addr: str,  self_addr: str, node_id: int):
     requests.post('http://{}/notify'.format(boot_addr), json={'node_id': node_id, "onion_addr": self_addr}, proxies=proxies)
