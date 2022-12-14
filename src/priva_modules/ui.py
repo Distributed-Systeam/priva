@@ -9,7 +9,7 @@ proxies = {
 }
 
 class UI():
-    def init_ui(self, priva_node: ChordNode):
+    def init_ui(priva_node: ChordNode):
         # print the banner
         print("""
                     _            

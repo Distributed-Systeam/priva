@@ -13,7 +13,7 @@ class NodeInfo:
     node_id: int
     onion_addr: str
 
-bootstrap_onion = 'yx6oq7hgqvtljutaxh47ux7nsvtmgimgjl6ycpw7qnf5mgcm66xbo4ad.onion'
+bootstrap_onion = '4fxti5dbqiqrp3z4iu3h5j4skvg7tskvkvkhdc7ub2shccm2xugzvuyd.onion'
 
 class ChordNode():
     def __init__(self, onion_addr):
@@ -35,7 +35,12 @@ class ChordNode():
         self.node_id = self.get_node_id(self.user_id)
 
     def set_successor(self, node: NodeInfo):
-        self.finger_table[0] = node
+        ft = self.finger_table
+        if len(ft) == 0:
+            ft.append(node)
+        else:
+            ft[0] = node
+        
 
     def get_successor(self) -> NodeInfo:
         return self.finger_table[0]
