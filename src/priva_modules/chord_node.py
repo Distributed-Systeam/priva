@@ -24,7 +24,7 @@ class ChordNode():
 
         # state variables
         self.predecessor = None
-        self.finger_table: List[NodeInfo] = [] * m # list of finger node ids
+        self.finger_table: List[NodeInfo] = []
         self.msg_history = dict()
         self.last_message = ''
         self.current_msg_peer = ''
@@ -40,7 +40,6 @@ class ChordNode():
             ft.append(node)
         else:
             ft[0] = node
-        
 
     def get_successor(self) -> NodeInfo:
         return self.finger_table[0]
@@ -97,7 +96,7 @@ class ChordNode():
             self.set_successor(successor)
             return 'Joined the network.'
         except Exception as e:
-            print(e)
+            print("join: ", e)
             return 'Failed to join the network.'
 
     def stabilize(self) -> None:

@@ -34,7 +34,7 @@ def find_successor():
 @app.route('/join', methods=['POST'])
 def join():
   node_id = request.json['node_id']
-  successor = priva_node.find_successor(node_id)
+  successor = priva_node.find_successor(node_id).__dict__
   return json.dumps(successor)
 
 @app.route('/notify', methods=['POST'])
