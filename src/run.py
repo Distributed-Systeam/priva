@@ -45,6 +45,13 @@ def notify():
 def ping():
   return "<h1>I have been pinged!</h1>"
 
+@app.route('/connect', methods=['POST'])
+def connect():
+  data = request.get_json()
+  user_id = data['user_id']
+  priva_node.current_msg_peer = user_id
+  return json.dumps({"user_id": priva_node.user_id})
+
 @app.route('/message', methods=['POST'])
 def message():
   data = request.get_json()

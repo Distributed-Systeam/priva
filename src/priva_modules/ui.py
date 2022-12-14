@@ -122,7 +122,7 @@ class UI():
                                     break
                                 # todo: fetch correct onion address
                                 # onion_addr = priva_node.msg_conn(args)
-                                addr = 'http://yx6oq7hgqvtljutaxh47ux7nsvtmgimgjl6ycpw7qnf5mgcm66xbo4ad.onion'
+                                addr = '7iwcz6yza5b3x74zvmfkbtafrsrkbfnaluzv4dy6p26llrq5vlvw64qd.onion'
                                 res = services.send_message(addr, tag, msg)
                                 # save sent message to msg_history
                                 if res == 'message received':

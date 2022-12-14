@@ -33,3 +33,7 @@ def ping(onion_addr: str) -> int:
 def send_message(onion_addr: str, tag: str, msg: str):
     res = requests.post('http://{}/message'.format(onion_addr), json={'node_id':tag, 'msg': msg}, proxies=proxies)
     return res.text
+
+def send_connect(onion_addr: str, tag: str):
+    res = requests.post('http://{}/connect'.format(onion_addr), json={'user_id':tag}, proxies=proxies)
+    return res.json()

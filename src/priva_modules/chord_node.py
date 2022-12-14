@@ -13,7 +13,7 @@ class NodeInfo:
     node_id: int
     onion_addr: str
 
-bootstrap_onion = 'phlyrehrs62mymqgzdzahyz6o56fi2ogjpdhmw3hjhjbll7z2ealqxad.onion'
+bootstrap_onion = '7iwcz6yza5b3x74zvmfkbtafrsrkbfnaluzv4dy6p26llrq5vlvw64qd.onion'
 
 class ChordNode():
     def __init__(self, onion_addr):
