@@ -86,7 +86,7 @@ class ChordNode():
         closest_addr = self.closest_preceeding_node(node_id).onion_addr
         if closest_addr == self.onion_addr:
             return NodeInfo(self.node_id, self.onion_addr)
-        successor = NodeInfo(**services.find_successor(closest_addr, node_id))
+        successor = NodeInfo(**services.find_successor(closest_addr, self.onion_addr, node_id))
         return successor
 
     def in_range(self, a: int, b: int, c: int) -> bool:
@@ -108,7 +108,7 @@ class ChordNode():
             if self.name == 'boot0':
                 self.set_successor(NodeInfo(self.node_id, self.onion_addr))
                 return 'Created the network.'
-            successor = NodeInfo(**services.join(onion_addr, self.onion_addr, self.node_id))
+            successor = NodeInfo(**services.find_successor(onion_addr, self.onion_addr, self.node_id))
             self.set_successor(successor)
             return 'Joined the network.'
         except Exception as e:

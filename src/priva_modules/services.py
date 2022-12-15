@@ -10,13 +10,8 @@ proxies = {
 def test(onion_addr: str, node_id: int):
     return requests.get('http://{}/find_successor?succ_node_id={}'.format(onion_addr, node_id), proxies=proxies).text
 
-def find_successor(onion_addr: str, node_id: int):
-    res = requests.get('http://{}/find_successor?succ_node_id={}'.format(onion_addr, node_id), proxies=proxies)
-    return res.json()
-
-def join(boot_addr: str,  self_addr: str, node_id: int):
-    res = requests.post('http://{}/join'.format(boot_addr), json={'node_id': node_id, "onion_addr": self_addr}, proxies=proxies)
-    print('SERVICE JOIN: {}'.format(res))
+def find_successor(onion_addr: str,  self_addr: str, node_id: int):
+    res = requests.post('http://{}/join'.format(onion_addr), json={'node_id': node_id, "onion_addr": self_addr}, proxies=proxies)
     return res.json()
 
 def get_predecessor(onion_addr: str):

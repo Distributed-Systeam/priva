@@ -26,13 +26,8 @@ def get_predecessor():
   pred_id = 'test_predecessor_id'
   return "<h1>Predecessor found! {}</h1>".format(pred_id)
 
-@app.route('/find_successor', methods = ['GET'])
+@app.route('/find_successor', methods=['POST'])
 def find_successor():
-  succ_id = request.args.get('succ_node_id')
-  return "<h1>Successor found! {}</h1>".format(succ_id)
-
-@app.route('/join', methods=['POST'])
-def join():
   node_id = request.json['node_id']
   successor = priva_node.find_successor(node_id).__dict__
   return json.dumps(successor)
