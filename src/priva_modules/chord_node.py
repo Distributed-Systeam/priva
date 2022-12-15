@@ -4,6 +4,7 @@ import threading
 from dataclasses import dataclass
 from typing import List, Union
 from priva_modules import services
+from colorama import Fore, Style
 
 m = 10 # number of bits in the node ID, and the number of entries in the finger table
 s = 2**m # size of the ring
@@ -74,7 +75,7 @@ class ChordNode():
             self.current_msg_peer = ContactInfo(**res)
             return True
         else:
-            print('NODE NOT ALIVE!')
+            print(f'{Fore.RED}{tag} is not reachable.{Style.RESET_ALL}')
             return False
 
     def get_node_from_ft(self, node_id) -> Union[NodeInfo, None]:
@@ -87,7 +88,6 @@ class ChordNode():
         print(services.test(bootstrap_onion, self.node_id))
 
     def get_predecessor(self) -> Union[NodeInfo, None]:
-        print('PREDERCESSOR: {}'.format(self.predecessor))
         return self.predecessor
 
     def find_successor(self, node_id: int) -> NodeInfo:
@@ -122,7 +122,6 @@ class ChordNode():
             successor = NodeInfo(**services.join(onion_addr, self.onion_addr, self.node_id))
             self.set_successor(successor)
             self.stabilize()
-            print('FINGER \n{}\nPred\n{}'.format(self.finger_table, self.predecessor))
             return 'Joined the network.'
         except Exception as e:
             print("join: ", e)
@@ -131,11 +130,9 @@ class ChordNode():
     def stabilize(self) -> None:
         """Stabilize the network"""
         succ = self.get_successor()
-        print('STABILIZE: {}'.format(succ.onion_addr))
         succ_pred = services.get_predecessor(succ.onion_addr)
         if succ_pred:
             succ_pred = NodeInfo(**succ_pred)
-        print('STABILIZE PRED: {}'.format(succ_pred))
         # is the successors predecessor in between me and my successor
         if succ_pred and self.in_range(self.node_id, succ_pred.node_id, succ.node_id):
             # if so, set my successor to the successors predecessor
