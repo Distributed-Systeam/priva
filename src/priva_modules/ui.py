@@ -134,7 +134,6 @@ class UI():
                         else:
                             # todo: handle conection not successful
                             print(f'{Fore.RED}Connection failed.{Style.RESET_ALL}\n')
-                            print(f'{Fore.GREEN}{args}{Style.RESET_ALL} might not be online.\n')
                     else:
                         print(help_prompt)
                         continue
