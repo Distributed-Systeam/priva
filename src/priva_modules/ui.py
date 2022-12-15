@@ -103,8 +103,8 @@ class UI():
                         # todo: establish a connection with the peer
                         print(f'{Fore.GREEN}Connected to {args}{Style.RESET_ALL}\n')
                         print(f'Type {Fore.BLUE}back{Style.RESET_ALL} to exit the chat.\n')
-                        # todo: logic for connection successful or not 
-                        priva_node.send_connect(addr, tag)
+                        # todo: logic for connection successful or not
+                        priva_node.send_connect(args)
                         connection_successful = True
                         if (connection_successful):
                             priva_node.current_msg_peer = args

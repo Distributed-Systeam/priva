@@ -58,9 +58,20 @@ class ChordNode():
         print('onion_addr: {}'.format(self.onion_addr))
         print('=========\n')
 
-    def send_connect(self, addr, tag):
-        res = services.send_connect(addr, tag)
-        self.current_msg_peer = res['user_id']
+    def send_connect(self, tag):
+        connect_node_hash = self.get_node_id(tag)
+        successor = self.find_successor(connect_node_hash)
+        if successor.node_id == connect_node_hash:
+            res = services.send_connect(successor.onion_addr, self.user_id)
+            self.current_msg_peer = res['user_id']
+        else:
+            print('NODE NOT ALIVE!')
+
+    def get_node_from_ft(self, node_id) -> Union[NodeInfo, None]:
+        for node_info in self.finger_table:
+            if node_info.node_id == node_id:
+                return node_info
+        return None
 
     def node_test(self):
         print(services.test(bootstrap_onion, self.node_id))
@@ -69,11 +80,12 @@ class ChordNode():
         return self.predecessor
 
     def find_successor(self, node_id: int) -> NodeInfo:
-        if len(self.finger_table) == 1:
-            return self.finger_table[0]
-        if node_id in self.finger_table:
-            return self.finger_table[node_id]
+        node_from_ft = self.get_node_from_ft(node_id)
+        if node_from_ft:
+            return node_from_ft
         closest_addr = self.closest_preceeding_node(node_id).onion_addr
+        if closest_addr == self.onion_addr:
+            return NodeInfo(self.node_id, self.onion_addr)
         successor = NodeInfo(**services.find_successor(closest_addr, node_id))
         return successor
 
