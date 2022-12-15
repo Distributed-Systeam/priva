@@ -13,7 +13,7 @@ class NodeInfo:
     node_id: int
     onion_addr: str
 
-bootstrap_onion = '7iwcz6yza5b3x74zvmfkbtafrsrkbfnaluzv4dy6p26llrq5vlvw64qd.onion'
+bootstrap_onion = 'hevkoovevdliihm6p3on6dsi2aj3pcbbmygq4sglnxqkomnooy6punyd.onion'
 
 class ChordNode():
     def __init__(self, onion_addr):
@@ -77,6 +77,7 @@ class ChordNode():
         print(services.test(bootstrap_onion, self.node_id))
 
     def get_predecessor(self) -> Union[NodeInfo, None]:
+        print('PREDERCESSOR: {}'.format(self.predecessor.onion_addr))
         return self.predecessor
 
     def find_successor(self, node_id: int) -> NodeInfo:
@@ -110,6 +111,8 @@ class ChordNode():
                 return 'Created the network.'
             successor = NodeInfo(**services.find_successor(onion_addr, self.onion_addr, self.node_id))
             self.set_successor(successor)
+            self.stabilize()
+            print('FINGER \n{}\nPred\n{}'.format(self.finger_table, self.predecessor.onion_addr))
             return 'Joined the network.'
         except Exception as e:
             print("join: ", e)

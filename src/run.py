@@ -23,8 +23,10 @@ def index():
 
 @app.route('/get_predecessor', methods=['GET'])
 def get_predecessor():
-  pred_id = 'test_predecessor_id'
-  return "<h1>Predecessor found! {}</h1>".format(pred_id)
+  pred = priva_node.get_predecessor()
+  if pred:
+    return json.dumps(pred.__dict__)
+  return json.dumps({})
 
 @app.route('/find_successor', methods=['POST'])
 def find_successor():
@@ -34,7 +36,9 @@ def find_successor():
 
 @app.route('/notify', methods=['POST'])
 def notify():
-  return "<h1>I am notified!</h1>"
+  node_info = chord_node.NodeInfo(**request.json)
+  priva_node.ack_notify(node_info)
+  return 'Im notified'
 
 @app.route('/ping', methods=['GET'])
 def ping():
