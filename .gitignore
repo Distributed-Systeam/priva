@@ -4,4 +4,3 @@ env
 __pycache__
 .venv
 .contacts_list.txt
-.onion.txt

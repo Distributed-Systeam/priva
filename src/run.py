@@ -103,16 +103,13 @@ def start_server():
         # Create a hidden service where visitors of port 80 get redirected to local
         # port 5000 (this is where Flask runs by default).
         result = controller.create_hidden_service(hidden_service_dir, 80, target_port = 5000)
-        f = open('.onion.txt', 'w')
-        f.write(f'{result.hostname}')
-        f.close()
     except:
       print(f"{Fore.RED}* Error: cannot start tor hidden service!{Style.RESET_ALL}")
       
     # The hostname is only available when we can read the hidden service
     # directory. This requires us to be running with the same user as tor.
     try:
-      f = open('.onion.txt', 'r')
+      f = open(f'{hidden_service_dir}/hostname', 'r')
       onion = f.readline()
       onion_addr = onion
       priva_node = chord_node.ChordNode(onion_addr)
