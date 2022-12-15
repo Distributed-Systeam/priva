@@ -116,7 +116,7 @@ class UI():
                                     print(m)
                             while True:
                                 # show user_id of the peer so that the user knows who they are messaging with atm
-                                msg = input(f'{Fore.GREEN}Me{Style.RESET_ALL}: ')
+                                msg = input('')
                                 if msg == 'back':
                                     break
                                 # todo: fetch correct onion address
