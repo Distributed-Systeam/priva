@@ -121,6 +121,7 @@ class UI():
                                 # show user_id of the peer so that the user knows who they are messaging with atm
                                 msg = input('')
                                 if msg == 'back':
+                                    priva_node.current_msg_peer = ''
                                     break
                                 # todo: fetch correct onion address
                                 # onion_addr = priva_node.msg_conn(args)
