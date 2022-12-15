@@ -118,7 +118,7 @@ def start_server():
       priva_node = chord_node.ChordNode(onion_addr)
       #print(" * Priva is available at %s, press ctrl+c to quit" % result.hostname)
     except Exception as e:
-      print(f"{Fore.RED} * Unable to determine our service's hostname: {e}{Style.RESET_ALL}")
+      print(f"{Fore.RED} * Unable to determine the hidden service's hostname: {e}{Style.RESET_ALL}")
 
     try:
       log = logging.getLogger('werkzeug')
@@ -128,9 +128,9 @@ def start_server():
       # Shut down the hidden service and clean it off disk. Note that you *don't*
       # want to delete the hidden service directory if you'd like to have this
       # same *.onion address in the future.
-      print(" * Shutting down our hidden service")
-      controller.remove_hidden_service(hidden_service_dir)
-      shutil.rmtree(hidden_service_dir)
+      print(" * Shutting down the hidden service")
+      #controller.remove_hidden_service(hidden_service_dir)
+      #shutil.rmtree(hidden_service_dir)
 
     app.run()
 

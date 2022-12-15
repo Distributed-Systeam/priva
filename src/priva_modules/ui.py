@@ -40,7 +40,8 @@ class UI():
 
         # todo: call user_id generation
         priva_node.set_node_name(username)
-        print('\nJoining the network...')
+        if 'boot0#' not in priva_node.user_id:
+            print('\nJoining the network...')
         result = priva_node.join()
         if result == 'Failed to join the network.':
             print(f'\n{Fore.RED}Failed to join the network. Please try again later.{Style.RESET_ALL}\n')
