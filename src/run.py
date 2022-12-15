@@ -66,13 +66,13 @@ def message():
   # todo: add message to msg_history
   msg = data['msg']
   priva_node.last_message = msg
-  msg_from = data['node_id']
+  msg_from = data['user_id']
   msg_history = priva_node.get_msg_history(msg_from)
   if msg_history == None:
     priva_node.msg_history[msg_from] = [f'{msg_from}: {msg}']
   else:
     priva_node.msg_history[msg_from].append(f'{msg_from}: {msg}')
-  if priva_node.current_msg_peer == msg_from:
+  if priva_node.current_msg_peer.user_id == msg_from:
     print(f'{Fore.BLUE}{msg_from}{Style.RESET_ALL}: {msg}')
   return 'message received'
 
