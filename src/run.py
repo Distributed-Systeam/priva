@@ -26,12 +26,20 @@ def get_predecessor():
   pred = priva_node.get_predecessor()
   if pred:
     return json.dumps(pred.__dict__)
-  return json.dumps({})
+  return json.dumps(None)
 
 @app.route('/find_successor', methods=['POST'])
 def find_successor():
   node_id = request.json['node_id']
   successor = priva_node.find_successor(node_id).__dict__
+  return json.dumps(successor)
+
+@app.route('/join', methods=['POST'])
+def join():
+  node = chord_node.NodeInfo(**request.json)
+  successor = priva_node.find_successor(node.node_id).__dict__
+  if (successor['node_id'] != priva_node.node_id):
+    priva_node.set_successor(node)
   return json.dumps(successor)
 
 @app.route('/notify', methods=['POST'])
@@ -79,6 +87,7 @@ def start_server():
 
     global hidden_service_dir
     hidden_service_dir = os.path.join(controller.get_conf('DataDirectory', '/tmp'), 'priva')
+    print(f" * Hidden service directory: {hidden_service_dir}")
 
     # THIS RESETS THE TOR CONFIGURATION
     #if os.path.isdir(hidden_service_dir):

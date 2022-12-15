@@ -14,6 +14,10 @@ def find_successor(onion_addr: str,  self_addr: str, node_id: int):
     res = requests.post('http://{}/find_successor'.format(onion_addr), json={'node_id': node_id, "onion_addr": self_addr}, proxies=proxies)
     return res.json()
 
+def join(onion_addr: str,  self_addr: str, node_id: int):
+    res = requests.post('http://{}/join'.format(onion_addr), json={'node_id': node_id, "onion_addr": self_addr}, proxies=proxies)
+    return res.json()
+
 def get_predecessor(onion_addr: str):
     res = requests.get('http://{}/get_predecessor'.format(onion_addr), proxies=proxies)
     return res.json()
