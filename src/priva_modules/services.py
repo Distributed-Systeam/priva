@@ -33,6 +33,8 @@ def send_message(onion_addr: str, tag: str, msg: str):
     res = requests.post('http://{}/message'.format(onion_addr), json={'node_id':tag, 'msg': msg}, proxies=proxies)
     return res.text
 
-def send_connect(onion_addr: str, tag: str):
-    res = requests.post('http://{}/connect'.format(onion_addr), json={'user_id':tag}, proxies=proxies)
+def send_connect(onion_addr: str, self_addr:str, tag: str):
+    print('SENDING CONNECTION :.....')
+    res = requests.post('http://{}/connect'.format(onion_addr), json={'user_id':tag, "onion_addr": self_addr}, proxies=proxies)
+    print('SEND CONNECT RESP: {}'.format(res.json()))
     return res.json()

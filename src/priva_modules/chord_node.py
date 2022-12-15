@@ -13,6 +13,11 @@ class NodeInfo:
     node_id: int
     onion_addr: str
 
+@dataclass
+class ContactInfo:
+    user_id: str
+    onion_addr: str
+
 bootstrap_onion = 'eg76gq2w4dksqejhmf5zdxnof5aqi55yzy6we65r347hp2zzbo24uvqd.onion'
 
 class ChordNode():
@@ -27,7 +32,7 @@ class ChordNode():
         self.finger_table: List[NodeInfo] = []
         self.msg_history = dict()
         self.last_message = ''
-        self.current_msg_peer = ''
+        self.current_msg_peer = ContactInfo
 
     def set_node_name(self, name):
         self.name = name
@@ -58,16 +63,19 @@ class ChordNode():
         print('onion_addr: {}'.format(self.onion_addr))
         print('predecessor: {}'.format(self.predecessor))
         print('successor: {}'.format(self.finger_table[0]))
+        print('current_msg_peer: {}'.format(self.current_msg_peer))
         print('=========\n')
 
     def send_connect(self, tag):
         connect_node_hash = self.get_node_id(tag)
         successor = self.find_successor(connect_node_hash)
         if successor.node_id == connect_node_hash:
-            res = services.send_connect(successor.onion_addr, self.user_id)
-            self.current_msg_peer = res['user_id']
+            res = services.send_connect(successor.onion_addr, self.onion_addr, self.user_id)
+            self.current_msg_peer = ContactInfo(**res)
+            return True
         else:
             print('NODE NOT ALIVE!')
+            return False
 
     def get_node_from_ft(self, node_id) -> Union[NodeInfo, None]:
         for node_info in self.finger_table:

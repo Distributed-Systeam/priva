@@ -38,7 +38,7 @@ def find_successor():
 def join():
   node = chord_node.NodeInfo(**request.json)
   successor = priva_node.find_successor(node.node_id).__dict__
-  if (successor['node_id'] != priva_node.node_id):
+  if (successor['node_id'] == priva_node.node_id):
     priva_node.set_successor(node)
   return json.dumps(successor)
 
@@ -54,10 +54,11 @@ def ping():
 
 @app.route('/connect', methods=['POST'])
 def connect():
-  data = request.get_json()
-  user_id = data['user_id']
-  priva_node.current_msg_peer = user_id
-  return json.dumps({"user_id": priva_node.user_id})
+  data = request.json
+  contact_info = chord_node.ContactInfo(**data)
+  priva_node.current_msg_peer = contact_info
+  print('GETTING CONNECT REQUEST FROM: {}'.format(contact_info))
+  return json.dumps({"user_id": priva_node.user_id, 'onion_addr': priva_node.onion_addr})
 
 @app.route('/message', methods=['POST'])
 def message():

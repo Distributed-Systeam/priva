@@ -104,16 +104,14 @@ class UI():
                         print(f'{Fore.GREEN}Connected to {args}{Style.RESET_ALL}\n')
                         print(f'Type {Fore.BLUE}back{Style.RESET_ALL} to exit the chat.\n')
                         # todo: logic for connection successful or not
-                        priva_node.send_connect(args)
-                        connection_successful = True
+                        connection_successful = priva_node.send_connect(args)
                         if (connection_successful):
-                            priva_node.current_msg_peer = args
                             # save the contact
                             f = open('.contacts_list.txt', 'a')
                             f.write(f'{args}\n')
                             f.close()
                             # print message history with the peer
-                            msg_history = priva_node.get_msg_history(args)
+                            msg_history = priva_node.get_msg_history(priva_node.current_msg_peer.user_id)
                             if msg_history != None:
                                 for m in msg_history:
                                     print(m)
@@ -127,11 +125,11 @@ class UI():
                                 res = services.send_message(addr, tag, msg)
                                 # save sent message to msg_history
                                 if res == 'message received':
-                                    msg_history = priva_node.get_msg_history(args)
+                                    msg_history = priva_node.get_msg_history(priva_node.current_msg_peer.user_id)
                                     if msg_history == None:
-                                      priva_node.msg_history[args] = [f'{tag}: {msg}']
+                                      priva_node.msg_history[priva_node.current_msg_peer.user_id] = [f'{tag}: {msg}']
                                     else:
-                                      priva_node.msg_history[args].append(f'{tag}: {msg}')
+                                      priva_node.msg_history[priva_node.current_msg_peer.user_id].append(f'{tag}: {msg}')
                         else:
                             # todo: handle conection not successful
                             print(f'{Fore.RED}Connection failed.{Style.RESET_ALL}\n')
