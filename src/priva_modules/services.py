@@ -23,7 +23,8 @@ def get_predecessor(onion_addr: str):
     return res.json()
 
 def notify(boot_addr: str,  self_addr: str, node_id: int):
-    requests.post('http://{}/notify'.format(boot_addr), json={'node_id': node_id, "onion_addr": self_addr}, proxies=proxies)
+    res = requests.post('http://{}/notify'.format(boot_addr), json={'node_id': node_id, "onion_addr": self_addr}, proxies=proxies)
+    return res.text
 
 def ping(onion_addr: str) -> int:
     res = requests.get('http://{}/ping'.format(onion_addr), proxies=proxies)

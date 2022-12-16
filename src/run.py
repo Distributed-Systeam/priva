@@ -91,7 +91,7 @@ def start_server():
     print(f" * Hidden service directory: {hidden_service_dir}")
 
     # THIS RESETS THE TOR CONFIGURATION
-    #if os.path.isdir(hidden_service_dir):
+    # if os.path.isdir(hidden_service_dir):
     #  controller.remove_hidden_service(hidden_service_dir)
     #  shutil.rmtree(hidden_service_dir)
 

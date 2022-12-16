@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import List, Union
 from priva_modules import services
 from colorama import Fore, Style
+from time import sleep
 
 m = 10 # number of bits in the node ID, and the number of entries in the finger table
 s = 2**m # size of the ring
@@ -19,7 +20,7 @@ class ContactInfo:
     user_id: str
     onion_addr: str
 
-bootstrap_onion = 'eg76gq2w4dksqejhmf5zdxnof5aqi55yzy6we65r347hp2zzbo24uvqd.onion'
+bootstrap_onion = 'gsnackum7wcp24cfmsme3uk2fcrfazxlurd2w3d3kk6oine63aelnvad.onion'
 
 class ChordNode():
     def __init__(self, onion_addr):
@@ -34,6 +35,8 @@ class ChordNode():
         self.msg_history = dict()
         self.last_message = ''
         self.current_msg_peer = ContactInfo
+
+        self.activate_stabilize_timer = False
 
     def set_node_name(self, name):
         self.name = name
@@ -100,6 +103,15 @@ class ChordNode():
         successor = NodeInfo(**services.find_successor(closest_addr, self.onion_addr, node_id))
         return successor
 
+    def start_stabilize_timer(self):
+        myThread = threading.Thread(target=self.stabilize_timer, args=(30,))
+        myThread.start()
+
+    def stabilize_timer(self, sec):
+        sleep(sec)
+        print('==== STABILIZE CALLED')
+        self.stabilize()
+
     def in_range(self, a: int, b: int, c: int) -> bool:
         a = a % s
         b = b % s
@@ -122,6 +134,7 @@ class ChordNode():
             successor = NodeInfo(**services.join(onion_addr, self.onion_addr, self.node_id))
             self.set_successor(successor)
             self.stabilize()
+            self.activate_stabilize_timer = True
             return 'Joined the network.'
         except Exception as e:
             print("join: ", e)
@@ -137,13 +150,18 @@ class ChordNode():
         if succ_pred and self.in_range(self.node_id, succ_pred.node_id, succ.node_id):
             # if so, set my successor to the successors predecessor
             self.set_successor(succ_pred)
+            if self.activate_stabilize_timer:
+                self.start_stabilize_timer()
         else:
             # otherwise notify the successor that i am its predecessor
             self.notify(self.get_successor().onion_addr)
 
     def notify(self, onion_addr: str) -> None:
         """Notify the node"""
-        services.notify(onion_addr, self.onion_addr, self.node_id)
+        res = services.notify(onion_addr, self.onion_addr, self.node_id)
+        if res == 'Im notified':
+            if self.activate_stabilize_timer:
+                self.start_stabilize_timer()
     
     def ack_notify(self, node: NodeInfo) -> None:
         """Acknowledge the notification"""
