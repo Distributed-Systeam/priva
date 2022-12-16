@@ -1,8 +1,9 @@
+from optparse import Option
 import random
 import hashlib
 import threading
 from dataclasses import dataclass
-from typing import List, Union
+from typing import List, Optional
 from priva_modules import services
 from colorama import Fore, Style
 from time import sleep
@@ -32,9 +33,9 @@ class ChordNode():
         # state variables
         self.predecessor = None
         self.finger_table: List[NodeInfo] = []
-        self.msg_history = dict()
+        self.msg_history = {}
         self.last_message = ''
-        self.current_msg_peer = ContactInfo
+        self.current_msg_peer: Optional[ContactInfo] = None
 
         self.activate_stabilize_timer = False
 
@@ -81,7 +82,7 @@ class ChordNode():
             print(f'{Fore.RED}{tag} is not reachable.{Style.RESET_ALL}')
             return False
 
-    def get_node_from_ft(self, node_id) -> Union[NodeInfo, None]:
+    def get_node_from_ft(self, node_id) -> Optional[NodeInfo]:
         for node_info in self.finger_table:
             if node_info.node_id == node_id:
                 return node_info
@@ -90,7 +91,7 @@ class ChordNode():
     def node_test(self):
         print(services.test(bootstrap_onion, self.node_id))
 
-    def get_predecessor(self) -> Union[NodeInfo, None]:
+    def get_predecessor(self) -> Optional[NodeInfo]:
         return self.predecessor
 
     def find_successor(self, node_id: int) -> NodeInfo:
@@ -191,9 +192,17 @@ class ChordNode():
             print(f'is_alive() Error: {e}')
             return False
 
-    def get_msg_history(self, peer):
-        try:
-            msg_history = self.msg_history[peer]
+    def get_msg_history(self):
+        if self.current_msg_peer and self.current_msg_peer.user_id in self.msg_history:
+            peer_id = self.current_msg_peer.user_id
+            msg_history = self.msg_history[peer_id]
             return msg_history
-        except KeyError:
-            return None
+        return None
+
+    def receive_msg(self, peer: str, msg: str):
+        msg_peer = self.current_msg_peer
+        if peer not in self.msg_history:
+            self.msg_history[peer] = []
+        self.msg_history[peer].append(f'{peer}: {msg}')
+        if msg_peer and peer == msg_peer.user_id:
+            print(f'{Fore.BLUE}{peer}{Style.RESET_ALL}: {msg}')

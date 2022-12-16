@@ -1,6 +1,7 @@
+#type: ignore
 import os
 import json
-import shutil
+from typing import Optional
 from stem.control import Controller
 from flask import Flask, request
 from priva_modules import ui, chord_node
@@ -12,6 +13,7 @@ import json
 
 onion_addr = None
 priva_node = None
+priva_node: Optional[chord_node.ChordNode] = None
 cntrl = None
 hidden_service_dir = None
 
@@ -30,13 +32,19 @@ def get_predecessor():
 
 @app.route('/find_successor', methods=['POST'])
 def find_successor():
-  node_id = request.json['node_id']
+  data = request.json
+  if data == None:
+    return 'No node info provided'
+  node_id = data['node_id']
   successor = priva_node.find_successor(node_id).__dict__
   return json.dumps(successor)
 
 @app.route('/join', methods=['POST'])
 def join():
-  node = chord_node.NodeInfo(**request.json)
+  data = request.json
+  if data == None:
+    return 'No node info provided'
+  node = chord_node.NodeInfo(**data)
   successor = priva_node.find_successor(node.node_id).__dict__
   if (successor['node_id'] == priva_node.node_id):
     priva_node.set_successor(node)
@@ -44,7 +52,10 @@ def join():
 
 @app.route('/notify', methods=['POST'])
 def notify():
-  node_info = chord_node.NodeInfo(**request.json)
+  data = request.json
+  if data == None:
+    return 'No node info provided'
+  node_info = chord_node.NodeInfo(**data)
   priva_node.ack_notify(node_info)
   return 'Im notified'
 
@@ -55,6 +66,8 @@ def ping():
 @app.route('/connect', methods=['POST'])
 def connect():
   data = request.json
+  if data == None:
+    return 'No contact info provided'
   contact_info = chord_node.ContactInfo(**data)
   priva_node.current_msg_peer = contact_info
   print('GETTING CONNECT REQUEST FROM: {}'.format(contact_info))
@@ -62,18 +75,10 @@ def connect():
 
 @app.route('/message', methods=['POST'])
 def message():
-  data = request.get_json()
-  # todo: add message to msg_history
-  msg = data['msg']
-  priva_node.last_message = msg
-  msg_from = data['user_id']
-  msg_history = priva_node.get_msg_history(msg_from)
-  if msg_history == None:
-    priva_node.msg_history[msg_from] = [f'{msg_from}: {msg}']
-  else:
-    priva_node.msg_history[msg_from].append(f'{msg_from}: {msg}')
-  if priva_node.current_msg_peer.user_id == msg_from:
-    print(f'{Fore.BLUE}{msg_from}{Style.RESET_ALL}: {msg}')
+  data = request.json
+  if data == None:
+    return 'No message provided'
+  priva_node.receive_msg(data["user_id"], data["msg"])
   return 'message received'
 
 def start_server():
@@ -141,7 +146,8 @@ t.start()
 sleep(1)
 if onion_addr:
   print(f" * Tor hidden service running at {onion_addr}")
-status = ui.UI.init_ui(priva_node)
+ui = ui.UI(priva_node)
+status = ui.init_ui()
 if status == 'exited':
   print(" * Shutting down the hidden service\n")
   os._exit(0)

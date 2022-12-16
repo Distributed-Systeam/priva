@@ -9,7 +9,10 @@ proxies = {
 }
 
 class UI():
-    def init_ui(priva_node: ChordNode):
+    def __init__(self, priva_node: ChordNode):
+        self.private_node = priva_node
+    def init_ui(self):
+        priva_node = self.private_node
         # print the banner
         print("""
                     _            
@@ -111,26 +114,22 @@ class UI():
                             f.write(f'{args}\n')
                             f.close()
                             # print message history with the peer
-                            msg_history = priva_node.get_msg_history(priva_node.current_msg_peer.user_id)
+                            msg_history = priva_node.get_msg_history()
                             if msg_history != None:
                                 for m in msg_history:
                                     print(m)
-                            while True:
+                            while priva_node.current_msg_peer:
                                 # show user_id of the peer so that the user knows who they are messaging with atm
                                 msg = input('')
                                 if msg == 'back':
                                     priva_node.current_msg_peer = None
                                     break
-                                # todo: fetch correct onion address
                                 # onion_addr = priva_node.msg_conn(args)
                                 res = services.send_message(priva_node.current_msg_peer.onion_addr, tag, msg)
                                 # save sent message to msg_history
                                 if res == 'message received':
-                                    msg_history = priva_node.get_msg_history(priva_node.current_msg_peer.user_id)
-                                    if msg_history == None:
-                                      priva_node.msg_history[priva_node.current_msg_peer.user_id] = [f'{tag}: {msg}']
-                                    else:
-                                      priva_node.msg_history[priva_node.current_msg_peer.user_id].append(f'{tag}: {msg}')
+                                    priva_node.receive_msg(tag, msg)
+                                    msg_history = priva_node.get_msg_history()
                         else:
                             # todo: handle conection not successful
                             print(f'{Fore.RED}Connection failed.{Style.RESET_ALL}\n')
