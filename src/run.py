@@ -69,7 +69,6 @@ def connect():
   if data == None:
     return 'No contact info provided'
   contact_info = chord_node.ContactInfo(**data)
-  priva_node.current_msg_peer = contact_info
   print('GETTING CONNECT REQUEST FROM: {}'.format(contact_info))
   return json.dumps({"user_id": priva_node.user_id, 'onion_addr': priva_node.onion_addr})
 
