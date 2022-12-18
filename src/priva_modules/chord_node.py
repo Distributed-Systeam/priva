@@ -69,6 +69,7 @@ class ChordNode():
         print('predecessor: {}'.format(self.predecessor))
         print('successor: {}'.format(self.finger_table[0]))
         print('current_msg_peer: {}'.format(self.current_msg_peer))
+        print('finger_table: {}'.format(self.finger_table))
         print('=========\n')
 
     def send_connect(self, tag):
@@ -130,6 +131,7 @@ class ChordNode():
         a = a % s
         b = b % s
         c = c % s
+        print(f'ME: {a}, SUCC_PRED: {b},  SUCC: {c}')
         return b in range(a, c) or b in range(c, a)
 
     def closest_preceeding_node(self, node_id: int) -> NodeInfo:

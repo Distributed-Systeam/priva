@@ -11,11 +11,12 @@ from time import sleep
 import logging
 import json
 
-onion_addr = None
+service = None
+service_running = False
 priva_node = None
 priva_node: Optional[chord_node.ChordNode] = None
 cntrl = None
-hidden_service_dir = None
+key_path = os.path.expanduser('.private_key')
 
 app = Flask(__name__)
 
@@ -87,64 +88,46 @@ def start_server():
     controller.authenticate()
 
     print(' * Connecting to tor...')
-    # All hidden services have a directory on disk. Lets put ours in tor's data
-    # directory.
-
-    global hidden_service_dir
-    hidden_service_dir = os.path.join(controller.get_conf('DataDirectory', '/tmp'), 'priva')
-    print(f" * Hidden service directory: {hidden_service_dir}")
-
-    # THIS RESETS THE TOR CONFIGURATION
-    # if os.path.isdir(hidden_service_dir):
-    #  controller.remove_hidden_service(hidden_service_dir)
-    #  shutil.rmtree(hidden_service_dir)
-
-    #print(" * Creating our hidden service in %s" % hidden_service_dir)
     try:
-      global onion_addr
+      global service
+      global service_running
       global priva_node
-      if not os.path.isdir(hidden_service_dir):
-        # Create a hidden service where visitors of port 80 get redirected to local
-        # port 5000 (this is where Flask runs by default).
-        result = controller.create_hidden_service(hidden_service_dir, 80, target_port = 5000)
-        f = open('.onion.txt', 'w')
-        f.write(f'{result.hostname}')
-        f.close()
-    except:
-      print(f"{Fore.RED}* Error: cannot start tor hidden service!{Style.RESET_ALL}")
-      
-    # The hostname is only available when we can read the hidden service
-    # directory. This requires us to be running with the same user as tor.
-    try:
-      f = open('.onion.txt', 'r')
-      onion = f.readline()
-      onion_addr = onion
-      priva_node = chord_node.ChordNode(onion_addr)
-      #print(" * Priva is available at %s, press ctrl+c to quit" % result.hostname)
-    except Exception as e:
-      print(f"{Fore.RED} * Unable to determine the hidden service's hostname: {e}{Style.RESET_ALL}")
+      if not os.path.exists(key_path):
+        service = controller.create_ephemeral_hidden_service({80: 5000}, await_publication = True)
+        print(f' * Started a new tor hidden service at {service.service_id}.onion')
+        service_running = True
 
+        with open(key_path, 'w') as key_file:
+          key_file.write('%s:%s' % (service.private_key_type, service.private_key))
+      else:
+        with open(key_path) as key_file:
+          key_type, key_content = key_file.read().split(':', 1)
+
+        service = controller.create_ephemeral_hidden_service({80: 5000}, key_type = key_type, key_content = key_content, await_publication = True)
+      priva_node = chord_node.ChordNode(service.service_id)
+      print(f' * Resumed tor hidden service at {service.service_id}.onion')
+      service_running = True
+    except Exception as e:
+      print(f"{Fore.RED}* Could not start tor hidden service: {e}{Style.RESET_ALL}")
+    
     try:
       log = logging.getLogger('werkzeug')
       log.setLevel(logging.ERROR)
       app.run()
     finally:
-      # Shut down the hidden service and clean it off disk. Note that you *don't*
-      # want to delete the hidden service directory if you'd like to have this
-      # same *.onion address in the future.
       print(" * Shutting down the hidden service")
-      #controller.remove_hidden_service(hidden_service_dir)
-      #shutil.rmtree(hidden_service_dir)
 
     app.run()
 
 # run the server in the background
 t = Thread(target=start_server)
 t.start()
-#e = threading.Event()
-sleep(1)
-if onion_addr:
-  print(f" * Tor hidden service running at {onion_addr}")
+# wait for the hidden service
+while True:
+  if service_running == True:
+    # give time to print out flask stuff
+    sleep(1)
+    break
 ui = ui.UI(priva_node)
 status = ui.init_ui()
 if status == 'exited':
