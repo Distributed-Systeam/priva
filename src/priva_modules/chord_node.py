@@ -128,11 +128,10 @@ class ChordNode():
         self.stabilize()
 
     def in_range(self, a: int, b: int, c: int) -> bool:
-        a = a % s
-        b = b % s
-        c = c % s
-        print(f'ME: {a}, SUCC_PRED: {b},  SUCC: {c}')
-        return b in range(a, c) or b in range(c, a)
+        a = (a-c) % s
+        b = (b-c) % s
+        print(f'ME: {a}, SUCC_PRED: {b}, SUCC: {c}')
+        return b in range(a, s)
 
     def closest_preceeding_node(self, node_id: int) -> NodeInfo:
         ft = self.finger_table
@@ -168,6 +167,7 @@ class ChordNode():
         if succ.node_id == self.node_id:
             print('= Im my own successor -> start timer again')
             self.init_timed_stabilize()
+            print('\n === END STABILIZING ===\n')
             return
         succ_pred = services.get_predecessor(succ.onion_addr)
         print('= Successor Predecessor: {}'.format(succ_pred))
@@ -176,6 +176,7 @@ class ChordNode():
             if succ_pred.node_id == self.node_id:
                 print('== Im my successor\'s predecessor -> start timer again')
                 self.init_timed_stabilize()
+                print('\n === END STABILIZING ===\n')
                 return
         # is the successors predecessor in between me and my successor
         if succ_pred and self.in_range(self.node_id, succ_pred.node_id, succ.node_id):
