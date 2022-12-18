@@ -168,8 +168,11 @@ class ChordNode():
 
     def notify(self, onion_addr: str) -> None:
         """Notify the node"""
-        res = services.notify(onion_addr, self.onion_addr, self.node_id)
-        if res == 'Im notified':
+        try:
+            services.notify(onion_addr, self.onion_addr, self.node_id)
+        except Exception as e:
+            print('NOTIFY ERROR: {}'.format((e)))
+        finally:
             self.init_timed_stabilize()
     
     def ack_notify(self, node: NodeInfo) -> None:
