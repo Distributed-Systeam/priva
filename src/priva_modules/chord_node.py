@@ -144,6 +144,7 @@ class ChordNode():
         try:
             if self.name == 'boot0':
                 self.set_successor(NodeInfo(self.node_id, self.onion_addr))
+                self.activate_stabilize_timer = True
                 return 'Created the network.'
             res = services.join(onion_addr, self.onion_addr, self.node_id)
             if not res:
