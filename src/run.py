@@ -104,8 +104,8 @@ def start_server():
           key_type, key_content = key_file.read().split(':', 1)
 
         service = controller.create_ephemeral_hidden_service({80: 5000}, key_type = key_type, key_content = key_content, await_publication = True)
-      priva_node = chord_node.ChordNode(service.service_id)
-      print(f' * Resumed tor hidden service at {service.service_id}.onion')
+        print(f' * Resumed tor hidden service at {service.service_id}.onion')
+      priva_node = chord_node.ChordNode(f'{service.service_id}.onion')
       service_running = True
     except Exception as e:
       print(f"{Fore.RED}* Could not start tor hidden service: {e}{Style.RESET_ALL}")

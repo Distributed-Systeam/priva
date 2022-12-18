@@ -1,6 +1,7 @@
 from colorama import Fore, Style
 from priva_modules.chord_node import ChordNode
 from priva_modules import services
+from os.path import exists
 
 # tor proxies
 proxies = {
@@ -104,15 +105,24 @@ class UI():
                     if body == 'connect' and '#' in args:
                         print(f'\nConnecting...')
                         # todo: establish a connection with the peer
-                        print(f'Type {Fore.BLUE}back{Style.RESET_ALL} to exit the chat.\n')
                         # todo: logic for connection successful or not
                         connection_successful = self.priva_node.send_connect(args)
                         if (connection_successful):
                             # save the contact
                             print(f'{Fore.GREEN}Connected to {args}{Style.RESET_ALL}\n')
-                            f = open('.contacts_list.txt', 'a')
-                            f.write(f'{args}\n')
-                            f.close()
+                            print(f'\nType {Fore.BLUE}back{Style.RESET_ALL} to exit the chat.\n')
+                            file_exists = exists('.contacts_list.txt')
+                            if file_exists:
+                                cl = open('.contacts_list.txt', 'r')
+                                contacts = cl.readlines()
+                                if args not in contacts:
+                                    f = open('.contacts_list.txt', 'a')
+                                    f.write(f'{args}\n')
+                                    f.close()
+                            else:
+                                f = open('.contacts_list.txt', 'a')
+                                f.write(f'{args}\n')
+                                f.close()
                             # print message history with the peer
                             msg_history = self.priva_node.get_msg_history()
                             if msg_history != None:

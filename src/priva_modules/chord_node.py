@@ -21,7 +21,7 @@ class ContactInfo:
     user_id: str
     onion_addr: str
 
-bootstrap_onion = 'ikzqilpenguobd256viyj5k2tjgl42om3jhaafvzhqbosjnhjfre6oad.onion'
+bootstrap_onion = 'h4djoqvrfnibqlqoejjbg4cmeb4ihw2kyrzqrgvtbpit7orakmpi7kqd.onion'
 
 class ChordNode():
     def __init__(self, onion_addr):
