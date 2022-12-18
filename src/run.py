@@ -46,7 +46,9 @@ def join():
   if data == None:
     return 'No node info provided'
   node = chord_node.NodeInfo(**data)
-  successor = priva_node.find_successor(node.node_id, True).__dict__
+  successor = priva_node.find_successor(node.node_id, True)
+  successor.pred == successor.pred.__dict__
+  successor = successor.__dict__
   if (successor['node_id'] == priva_node.node_id):
     priva_node.set_successor(node)
   return json.dumps(successor)
