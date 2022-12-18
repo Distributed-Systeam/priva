@@ -122,9 +122,9 @@ class ChordNode():
         myThread.start()
 
     def stabilize_timer(self, sec):
-        sleep(sec)
         print('==== STABILIZE CALLED')
         self.stabilize()
+        sleep(sec)
 
     def in_range(self, a: int, b: int, c: int) -> bool:
         a = a % s
@@ -144,7 +144,6 @@ class ChordNode():
         try:
             if self.name == 'boot0':
                 self.set_successor(NodeInfo(self.node_id, self.onion_addr))
-                self.predecessor = NodeInfo(self.node_id, self.onion_addr)
                 return 'Created the network.'
             res = services.join(onion_addr, self.onion_addr, self.node_id)
             if not res:
