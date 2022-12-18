@@ -76,8 +76,11 @@ class ChordNode():
         successor = self.find_successor(connect_node_hash)
         if successor.node_id == connect_node_hash:
             res = services.send_connect(successor.onion_addr, self.onion_addr, self.user_id)
-            self.current_msg_peer = ContactInfo(**res)
-            return True
+            if res:
+                self.current_msg_peer = ContactInfo(**res)
+                return True
+            print(f'{Fore.RED} Max retries exceeded to {tag}{Style.RESET_ALL}')
+            return False
         else:
             print(f'{Fore.RED}{tag} is not reachable.{Style.RESET_ALL}')
             return False
@@ -103,8 +106,12 @@ class ChordNode():
         closest_addr = self.closest_preceeding_node(node_id).onion_addr
         if closest_addr == self.onion_addr:
             return NodeInfo(self.node_id, self.onion_addr)
-        successor = NodeInfo(**services.find_successor(closest_addr, self.onion_addr, node_id))
-        return successor
+        res = services.find_successor(closest_addr, self.onion_addr, node_id)
+        if res:
+            successor = NodeInfo(**res)
+            return successor
+        return NodeInfo(self.node_id, self.onion_addr)
+        # TODO call next closest preceeding node & handle previous node in finger table somehow
 
     def init_timed_stabilize(self):
         if self.activate_stabilize_timer:
@@ -130,7 +137,7 @@ class ChordNode():
         for i in range(len(ft)-1, 0, -1):
             if self.in_range(self.node_id, ft[i].node_id, node_id):
                 return ft[i]
-        return self.get_successor() # if no node in range, return the successor
+        return NodeInfo(self.node_id, self.onion_addr) # if no node in range, return self
 
     def join(self, onion_addr = bootstrap_onion):
         """Join the network"""
@@ -139,7 +146,10 @@ class ChordNode():
                 self.set_successor(NodeInfo(self.node_id, self.onion_addr))
                 self.predecessor = NodeInfo(self.node_id, self.onion_addr)
                 return 'Created the network.'
-            successor = NodeInfo(**services.join(onion_addr, self.onion_addr, self.node_id))
+            res = services.join(onion_addr, self.onion_addr, self.node_id)
+            if not res:
+                raise Exception('Failed to join the network.')
+            successor = NodeInfo(**res)
             self.set_successor(successor)
             self.stabilize()
             self.activate_stabilize_timer = True
