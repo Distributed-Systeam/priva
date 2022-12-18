@@ -36,8 +36,7 @@ def find_successor():
   if data == None:
     return 'No node info provided'
   node_id = data['node_id']
-  get_pred = True if data['get_pred'] == 'True' else False
-  successor = priva_node.find_successor(node_id, get_pred).__dict__
+  successor = priva_node.find_successor(node_id).__dict__
   return json.dumps(successor)
 
 @app.route('/join', methods=['POST'])
@@ -46,10 +45,7 @@ def join():
   if data == None:
     return 'No node info provided'
   node = chord_node.NodeInfo(**data)
-  successor = priva_node.find_successor(node.node_id, True)
-  successor.pred = successor.pred.__dict__
-  successor = successor.__dict__
-  print('Successor: ', successor, " type: ", type(successor))
+  successor = priva_node.find_successor(node.node_id).__dict__
   if (successor['node_id'] == priva_node.node_id):
     priva_node.set_successor(node)
   return json.dumps(successor)
@@ -59,7 +55,7 @@ def notify():
   data = request.json
   if data == None:
     return 'No node info provided'
-  node_info = chord_node.PredInfo(**data)
+  node_info = chord_node.NodeInfo(**data)
   priva_node.ack_notify(node_info)
   return 'Im notified'
 
