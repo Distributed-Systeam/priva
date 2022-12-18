@@ -160,6 +160,9 @@ class ChordNode():
     def stabilize(self) -> None:
         """Stabilize the network"""
         succ = self.get_successor()
+        if succ.node_id == self.node_id:
+            self.init_timed_stabilize()
+            return
         succ_pred = services.get_predecessor(succ.onion_addr)
         if succ_pred:
             succ_pred = NodeInfo(**succ_pred)
@@ -173,15 +176,17 @@ class ChordNode():
             # if self.activate_stabilize_timer:
             #     self.start_stabilize_timer()
         #notify the successor that i am its predecessor
-        self.notify(self.get_successor().onion_addr)
+        self.notify(succ.onion_addr)
 
     def notify(self, onion_addr: str) -> None:
         """Notify the node"""
         try:
             services.notify(onion_addr, self.onion_addr, self.node_id)
+            print('===> SEND NOTIFY')
         except Exception as e:
             print('NOTIFY ERROR: {}'.format((e)))
         finally:
+            print('===> START STABILIZE TIMER AFTER SENDING NOTIFY REQUEST')
             self.init_timed_stabilize()
     
     def ack_notify(self, node: NodeInfo) -> None:
