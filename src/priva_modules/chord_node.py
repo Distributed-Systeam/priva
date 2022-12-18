@@ -15,6 +15,7 @@ s = 2**m # size of the ring
 class NodeInfo:
     node_id: int
     onion_addr: str
+    pred: Optional['NodeInfo'] = None
 
 @dataclass
 class ContactInfo:
@@ -94,14 +95,17 @@ class ChordNode():
     def get_predecessor(self) -> Optional[NodeInfo]:
         return self.predecessor
 
-    def find_successor(self, node_id: int) -> NodeInfo:
+    def find_successor(self, node_id: int, get_pred = False) -> NodeInfo:
         node_from_ft = self.get_node_from_ft(node_id)
         if node_from_ft:
+            if get_pred:
+                pred_node = NodeInfo(**services.get_predecessor(node_from_ft.onion_addr))
+                node_from_ft.pred = pred_node
             return node_from_ft
         closest_addr = self.closest_preceeding_node(node_id).onion_addr
         if closest_addr == self.onion_addr:
-            return NodeInfo(self.node_id, self.onion_addr)
-        successor = NodeInfo(**services.find_successor(closest_addr, self.onion_addr, node_id))
+            return NodeInfo(self.node_id, self.onion_addr, self.predecessor)
+        successor = NodeInfo(**services.find_successor(closest_addr, self.onion_addr, node_id, get_pred))
         return successor
 
     def start_stabilize_timer(self):
@@ -131,9 +135,12 @@ class ChordNode():
         try:
             if self.name == 'boot0':
                 self.set_successor(NodeInfo(self.node_id, self.onion_addr))
+                self.predecessor = NodeInfo(self.node_id, self.onion_addr)
                 return 'Created the network.'
             successor = NodeInfo(**services.join(onion_addr, self.onion_addr, self.node_id))
             self.set_successor(successor)
+            if successor.pred and not self.in_range(self.node_id, successor.pred.node_id, successor.node_id):
+                self.predecessor = successor.pred
             self.stabilize()
             self.activate_stabilize_timer = True
             return 'Joined the network.'
