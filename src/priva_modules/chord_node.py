@@ -122,9 +122,9 @@ class ChordNode():
         myThread.start()
 
     def stabilize_timer(self, sec):
+        sleep(sec)
         print('==== STABILIZE CALLED')
         self.stabilize()
-        sleep(sec)
 
     def in_range(self, a: int, b: int, c: int) -> bool:
         a = a % s
