@@ -147,15 +147,16 @@ class ChordNode():
         succ_pred = services.get_predecessor(succ.onion_addr)
         if succ_pred:
             succ_pred = NodeInfo(**succ_pred)
+        if succ_pred.node_id == self.node_id:
+            return
         # is the successors predecessor in between me and my successor
         if succ_pred and self.in_range(self.node_id, succ_pred.node_id, succ.node_id):
             # if so, set my successor to the successors predecessor
             self.set_successor(succ_pred)
-            if self.activate_stabilize_timer:
-                self.start_stabilize_timer()
-        else:
-            # otherwise notify the successor that i am its predecessor
-            self.notify(self.get_successor().onion_addr)
+            # if self.activate_stabilize_timer:
+            #     self.start_stabilize_timer()
+        #notify the successor that i am its predecessor
+        self.notify(self.get_successor().onion_addr)
 
     def notify(self, onion_addr: str) -> None:
         """Notify the node"""
