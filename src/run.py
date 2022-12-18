@@ -10,6 +10,7 @@ import logging
 import json
 
 service = None
+service_running = False
 priva_node = None
 cntrl = None
 key_path = os.path.expanduser('.private_key')
@@ -83,10 +84,12 @@ def start_server():
     print(' * Connecting to tor...')
     try:
       global service
+      global service_running
       global priva_node
       if not os.path.exists(key_path):
         service = controller.create_ephemeral_hidden_service({80: 5000}, await_publication = True)
         print(f' * Started a new tor hidden service at {service.service_id}.onion')
+        service_running = True
 
         with open(key_path, 'w') as key_file:
           key_file.write('%s:%s' % (service.private_key_type, service.private_key))
@@ -97,6 +100,7 @@ def start_server():
         service = controller.create_ephemeral_hidden_service({80: 5000}, key_type = key_type, key_content = key_content, await_publication = True)
       priva_node = chord_node.ChordNode(service.service_id)
       print(f' * Resumed tor hidden service at {service.service_id}.onion')
+      service_running = True
     except Exception as e:
       print(f"{Fore.RED}* Could not start tor hidden service: {e}{Style.RESET_ALL}")
     
@@ -112,7 +116,12 @@ def start_server():
 # run the server in the background
 t = Thread(target=start_server)
 t.start()
-sleep(10)
+# wait for the hidden service
+while True:
+  if service_running == True:
+    # give time to print out flask stuff
+    sleep(1)
+    break
 status = ui.UI.init_ui(priva_node)
 if status == 'exited':
   print(" * Shutting down the hidden service\n")
