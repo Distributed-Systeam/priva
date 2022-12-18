@@ -21,7 +21,7 @@ class ContactInfo:
     user_id: str
     onion_addr: str
 
-bootstrap_onion = 'ecrj6gwcb2abzpuqun5gcfnrueayuuvq5snq5t5wt3l37yq7shvx7eyd.onion'
+bootstrap_onion = 'ikzqilpenguobd256viyj5k2tjgl42om3jhaafvzhqbosjnhjfre6oad.onion'
 
 class ChordNode():
     def __init__(self, onion_addr):
@@ -147,8 +147,8 @@ class ChordNode():
         succ_pred = services.get_predecessor(succ.onion_addr)
         if succ_pred:
             succ_pred = NodeInfo(**succ_pred)
-        if succ_pred.node_id == self.node_id:
-            return
+            if succ_pred.node_id == self.node_id:
+                return
         # is the successors predecessor in between me and my successor
         if succ_pred and self.in_range(self.node_id, succ_pred.node_id, succ.node_id):
             # if so, set my successor to the successors predecessor
