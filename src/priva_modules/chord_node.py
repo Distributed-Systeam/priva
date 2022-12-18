@@ -162,30 +162,37 @@ class ChordNode():
 
     def stabilize(self) -> None:
         """Stabilize the network"""
+        print('\n === START STABILIZING ===')
         succ = self.get_successor()
+        print('= My Successor: {}'.format(succ))
         if succ.node_id == self.node_id:
+            print('= Im my own successor -> start timer again')
             self.init_timed_stabilize()
             return
         succ_pred = services.get_predecessor(succ.onion_addr)
+        print('= Successor Predecessor: {}'.format(succ_pred))
         if succ_pred:
             succ_pred = NodeInfo(**succ_pred)
             if succ_pred.node_id == self.node_id:
+                print('== Im my successor\'s predecessor -> start timer again')
                 self.init_timed_stabilize()
                 return
         # is the successors predecessor in between me and my successor
         if succ_pred and self.in_range(self.node_id, succ_pred.node_id, succ.node_id):
+            print('= Successor predecessor is between me and my successor -> set successor predecessor as successor')
             # if so, set my successor to the successors predecessor
             self.set_successor(succ_pred)
             # if self.activate_stabilize_timer:
             #     self.start_stabilize_timer()
         #notify the successor that i am its predecessor
         self.notify(succ.onion_addr)
+        print('\n === END STABILIZING ===\n')
 
     def notify(self, onion_addr: str) -> None:
         """Notify the node"""
         try:
             services.notify(onion_addr, self.onion_addr, self.node_id)
-            print('===> SEND NOTIFY')
+            print('===> SEND NOTIFY TO: {}'.format(onion_addr))
         except Exception as e:
             print('NOTIFY ERROR: {}'.format((e)))
         finally:
@@ -194,8 +201,12 @@ class ChordNode():
     
     def ack_notify(self, node: NodeInfo) -> None:
         """Acknowledge the notification"""
+        print('\n === START ACKNOWLEDGE NOTIFY ===')
         pred = self.get_predecessor()
+        print('= Predecessor: {}'.format(pred))
         if not pred or self.in_range(pred.node_id, node.node_id, self.node_id):
+            print('= No predecessor or {} between my predecessor and me'.format(node.onion_addr))
+            print('= -> set new predecessor: {}'.format(node))
             self.predecessor = node
 
     def fix_fingers(self) -> None:
