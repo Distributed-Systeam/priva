@@ -5,3 +5,4 @@ __pycache__
 .venv
 .contacts_list.txt
 .onion.txt
+.private_key

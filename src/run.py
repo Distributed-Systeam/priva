@@ -1,6 +1,7 @@
+#type: ignore
 import os
 import json
-import shutil
+from typing import Optional
 from stem.control import Controller
 from flask import Flask, request
 from priva_modules import ui, chord_node
@@ -12,6 +13,7 @@ import json
 
 onion_addr = None
 priva_node = None
+priva_node: Optional[chord_node.ChordNode] = None
 cntrl = None
 hidden_service_dir = None
 
@@ -23,42 +25,59 @@ def index():
 
 @app.route('/get_predecessor', methods=['GET'])
 def get_predecessor():
-  pred_id = 'test_predecessor_id'
-  return "<h1>Predecessor found! {}</h1>".format(pred_id)
+  pred = priva_node.get_predecessor()
+  if pred:
+    return json.dumps(pred.__dict__)
+  return json.dumps(None)
 
-@app.route('/find_successor', methods = ['GET'])
+@app.route('/find_successor', methods=['POST'])
 def find_successor():
-  succ_id = request.args.get('succ_node_id')
-  return "<h1>Successor found! {}</h1>".format(succ_id)
+  data = request.json
+  if data == None:
+    return 'No node info provided'
+  node_id = data['node_id']
+  successor = priva_node.find_successor(node_id).__dict__
+  return json.dumps(successor)
 
 @app.route('/join', methods=['POST'])
 def join():
-  node_id = request.json['node_id']
-  successor = priva_node.find_successor(node_id)
+  data = request.json
+  if data == None:
+    return 'No node info provided'
+  node = chord_node.NodeInfo(**data)
+  successor = priva_node.find_successor(node.node_id).__dict__
+  if (successor['node_id'] == priva_node.node_id):
+    priva_node.set_successor(node)
   return json.dumps(successor)
 
 @app.route('/notify', methods=['POST'])
 def notify():
-  return "<h1>I am notified!</h1>"
+  data = request.json
+  if data == None:
+    return 'No node info provided'
+  node_info = chord_node.NodeInfo(**data)
+  priva_node.ack_notify(node_info)
+  return 'Im notified'
 
 @app.route('/ping', methods=['GET'])
 def ping():
   return "<h1>I have been pinged!</h1>"
 
+@app.route('/connect', methods=['POST'])
+def connect():
+  data = request.json
+  if data == None:
+    return 'No contact info provided'
+  contact_info = chord_node.ContactInfo(**data)
+  print('GETTING CONNECT REQUEST FROM: {}'.format(contact_info))
+  return json.dumps({"user_id": priva_node.user_id, 'onion_addr': priva_node.onion_addr})
+
 @app.route('/message', methods=['POST'])
 def message():
-  data = request.get_json()
-  # todo: add message to msg_history
-  msg = data['msg']
-  priva_node.last_message = msg
-  msg_from = data['node_id']
-  msg_history = priva_node.get_msg_history(msg_from)
-  if msg_history == None:
-    priva_node.msg_history[msg_from] = [f'{msg_from}: {msg}']
-  else:
-    priva_node.msg_history[msg_from].append(f'{msg_from}: {msg}')
-  if priva_node.current_msg_peer == msg_from:
-    print(f'{Fore.BLUE}{msg_from}{Style.RESET_ALL}: {msg}')
+  data = request.json
+  if data == None:
+    return 'No message provided'
+  priva_node.receive_msg(data["user_id"], data["msg"])
   return 'message received'
 
 def start_server():
@@ -73,9 +92,10 @@ def start_server():
 
     global hidden_service_dir
     hidden_service_dir = os.path.join(controller.get_conf('DataDirectory', '/tmp'), 'priva')
+    print(f" * Hidden service directory: {hidden_service_dir}")
 
     # THIS RESETS THE TOR CONFIGURATION
-    #if os.path.isdir(hidden_service_dir):
+    # if os.path.isdir(hidden_service_dir):
     #  controller.remove_hidden_service(hidden_service_dir)
     #  shutil.rmtree(hidden_service_dir)
 
@@ -102,7 +122,7 @@ def start_server():
       priva_node = chord_node.ChordNode(onion_addr)
       #print(" * Priva is available at %s, press ctrl+c to quit" % result.hostname)
     except Exception as e:
-      print(f"{Fore.RED} * Unable to determine our service's hostname: {e}{Style.RESET_ALL}")
+      print(f"{Fore.RED} * Unable to determine the hidden service's hostname: {e}{Style.RESET_ALL}")
 
     try:
       log = logging.getLogger('werkzeug')
@@ -112,9 +132,9 @@ def start_server():
       # Shut down the hidden service and clean it off disk. Note that you *don't*
       # want to delete the hidden service directory if you'd like to have this
       # same *.onion address in the future.
-      print(" * Shutting down our hidden service")
-      controller.remove_hidden_service(hidden_service_dir)
-      shutil.rmtree(hidden_service_dir)
+      print(" * Shutting down the hidden service")
+      #controller.remove_hidden_service(hidden_service_dir)
+      #shutil.rmtree(hidden_service_dir)
 
     app.run()
 
@@ -125,7 +145,8 @@ t.start()
 sleep(1)
 if onion_addr:
   print(f" * Tor hidden service running at {onion_addr}")
-status = ui.UI.init_ui(priva_node)
+ui = ui.UI(priva_node)
+status = ui.init_ui()
 if status == 'exited':
   print(" * Shutting down the hidden service\n")
   os._exit(0)
