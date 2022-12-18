@@ -12,10 +12,15 @@ m = 10 # number of bits in the node ID, and the number of entries in the finger 
 s = 2**m # size of the ring
 
 @dataclass
+class PredInfo:
+    node_id: int
+    onion_addr: str
+
+@dataclass
 class NodeInfo:
     node_id: int
     onion_addr: str
-    pred: Optional['NodeInfo'] = None
+    pred: Optional['PredInfo'] = None
 
 @dataclass
 class ContactInfo:
@@ -32,7 +37,7 @@ class ChordNode():
         self.next = 0
 
         # state variables
-        self.predecessor = None
+        self.predecessor: Optional[PredInfo] = None
         self.finger_table: List[NodeInfo] = []
         self.msg_history = {}
         self.last_message = ''
@@ -92,14 +97,16 @@ class ChordNode():
     def node_test(self):
         print(services.test(bootstrap_onion, self.node_id))
 
-    def get_predecessor(self) -> Optional[NodeInfo]:
-        return self.predecessor
+    def get_predecessor(self) -> Optional[PredInfo]:
+        if self.predecessor:
+            return PredInfo(self.predecessor.node_id, self.predecessor.onion_addr)
+        return None
 
     def find_successor(self, node_id: int, get_pred = False) -> NodeInfo:
         node_from_ft = self.get_node_from_ft(node_id)
         if node_from_ft:
             if get_pred:
-                pred_node = NodeInfo(**services.get_predecessor(node_from_ft.onion_addr))
+                pred_node = PredInfo(**services.get_predecessor(node_from_ft.onion_addr))
                 node_from_ft.pred = pred_node
             return node_from_ft
         closest_addr = self.closest_preceeding_node(node_id).onion_addr
@@ -135,9 +142,12 @@ class ChordNode():
         try:
             if self.name == 'boot0':
                 self.set_successor(NodeInfo(self.node_id, self.onion_addr))
-                self.predecessor = NodeInfo(self.node_id, self.onion_addr)
+                self.predecessor = PredInfo(self.node_id, self.onion_addr)
                 return 'Created the network.'
-            successor = NodeInfo(**services.join(onion_addr, self.onion_addr, self.node_id))
+            res = services.join(onion_addr, self.onion_addr, self.node_id)
+            print(res)
+            successor = NodeInfo(res['node_id'], res['onion_addr'], PredInfo(**res['pred']))
+            print('successor: ', successor)
             self.set_successor(successor)
             if successor.pred and not self.in_range(self.node_id, successor.pred.node_id, successor.node_id):
                 self.predecessor = successor.pred
@@ -172,7 +182,7 @@ class ChordNode():
             if self.activate_stabilize_timer:
                 self.start_stabilize_timer()
     
-    def ack_notify(self, node: NodeInfo) -> None:
+    def ack_notify(self, node: PredInfo) -> None:
         """Acknowledge the notification"""
         pred = self.get_predecessor()
         if not pred or self.in_range(pred.node_id, node.node_id, self.node_id):

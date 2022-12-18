@@ -59,7 +59,7 @@ def notify():
   data = request.json
   if data == None:
     return 'No node info provided'
-  node_info = chord_node.NodeInfo(**data)
+  node_info = chord_node.PredInfo(**data)
   priva_node.ack_notify(node_info)
   return 'Im notified'
 
