@@ -66,10 +66,10 @@ class ChordNode():
         print('node_id: {}'.format(self.node_id))
         print('onion_addr: {}'.format(self.onion_addr))
         if self.predecessor:
-            print('predecessor: {}, {}'.format(self.predecessor.node_id, self.predecessor.onion_addr))
+            print('predecessor_node_id: {}\npredecessor_onion_addr: {}'.format(self.predecessor.node_id, self.predecessor.onion_addr))
         else:
             print('predecessor: None')
-        print('successor: {}, {}'.format(self.finger_table[0].node_id, self.finger_table[0].onion_addr))
+        print('successor_node_id: {}\nsuccessor_onion_addr: {}'.format(self.finger_table[0].node_id, self.finger_table[0].onion_addr))
         print('=========\n')
 
     def send_connect(self, tag):
