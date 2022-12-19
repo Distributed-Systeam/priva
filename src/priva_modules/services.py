@@ -69,3 +69,11 @@ def send_connect(onion_addr: str, self_addr:str, tag: str):
     except Exception as e:
         print('== SERVICE ** send_connect ** ERROR: {}'.format(e))
         return None
+
+def get_ancestor(onion_addr: str):
+    try:
+        res = s.get('http://{}/get_ancestor'.format(onion_addr), proxies=proxies)
+        return res.json()
+    except Exception as e:
+        print('== SERVICE ** get_ancestor ** ERROR: {}'.format(e))
+        return None

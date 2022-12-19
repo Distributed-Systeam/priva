@@ -58,8 +58,8 @@ class UI():
         print(f'Start messaging with a peer by using their tag: {Fore.BLUE}connect {Fore.GREEN}username#1234{Style.RESET_ALL}.')
 
         print(f'\nType {Fore.BLUE}help{Style.RESET_ALL} to see available commands.\n')
-        self.priva_node.start_stabilize_timer()
-        self.priva_node.start_check_predecessor_timer()
+        self.priva_node.start_timer('stabilize')
+        self.priva_node.start_timer('predecessor')
         # todo: add all available commands
         help_prompt = f"""
         Usage: [command] [args]
