@@ -225,7 +225,7 @@ class ChordNode():
             print(f'is_alive() Error: {e}')
             return False
 
-        # finds a node in the network by their user_id and if found, add it as the current messaging peer
+    # finds a node in the network by their user_id and if found, add it as the current messaging peer
     def send_connect(self, tag):
         connect_node_hash = self.get_node_id(tag)
         successor = self.find_successor(connect_node_hash)
