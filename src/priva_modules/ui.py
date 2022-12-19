@@ -89,6 +89,7 @@ class UI():
             # help command
             if command == 'help' or not command:
                 print(help_prompt)
+                continue
             # list command
             if command == 'list':
                 print('\nContacts list:')
