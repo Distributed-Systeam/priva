@@ -1,4 +1,3 @@
-from optparse import Option
 import random
 import hashlib
 import threading
@@ -8,7 +7,7 @@ from priva_modules import services
 from colorama import Fore, Style
 from time import sleep
 
-m = 10 # number of bits in the node ID, and the number of entries in the finger table
+m = 10 # number of bits in the node ID
 s = 2**m # size of the ring
 
 @dataclass
@@ -61,9 +60,6 @@ class ChordNode():
         else:
             ft[1] = node
 
-    def get_successor(self) -> NodeInfo:
-        return self.finger_table[0]
-
     # calculates a node_id (hash) based on the node's user_id 
     def get_node_id(self, user_id: str) -> int:
         hash = hashlib.blake2b(digest_size=m)
@@ -84,6 +80,11 @@ class ChordNode():
         print('finger_table: {}'.format(self.finger_table))
         print('=========\n')
 
+
+    def get_successor(self) -> NodeInfo:
+        return self.finger_table[0]
+    
+    # finds a node in the network by their user_id and if found, add it as a messaging peer
     def send_connect(self, tag):
         connect_node_hash = self.get_node_id(tag)
         successor = self.find_successor(connect_node_hash)
@@ -98,6 +99,7 @@ class ChordNode():
             print(f'{Fore.RED}{tag} is not reachable.{Style.RESET_ALL}')
             return False
 
+    # checks if the node_id is in finger table and returns its node info if found
     def get_node_from_ft(self, node_id) -> Optional[NodeInfo]:
         for node_info in self.finger_table:
             if node_info.node_id == node_id:
@@ -109,6 +111,7 @@ class ChordNode():
             return NodeInfo(self.predecessor.node_id, self.predecessor.onion_addr)
         return None
 
+    # finds the successor of a node_id in the network
     def find_successor(self, node_id: int) -> NodeInfo:
         node_from_ft = self.get_node_from_ft(node_id)
         if node_from_ft:
@@ -122,22 +125,27 @@ class ChordNode():
             return successor
         return NodeInfo(self.node_id, self.onion_addr)
 
+    # starts a thread that periodically checks if the predecessor is still alive
     def init_timed_stabilize(self):
         if self.activate_stabilize_timer:
             self.start_timer('stabilize')
 
+    # a timer for stabilizing the network
     def stabilize_timer(self, sec):
         sleep(sec)
         self.stabilize()
 
+    # a timer for checking if the predecessor is still alive
     def check_predecessor_timer(self, sec):
         sleep(sec)
         self.check_predecessor()
 
+    # a timer for checking if the ancestor information is still valid
     def check_ancestor_timer(self, sec):
         sleep(sec)
         self.check_ancestor()
 
+    # starts a thread for a given timer
     def start_timer(self, arg):
         target_func = None
         if arg == 'stabilize':
@@ -151,12 +159,13 @@ class ChordNode():
             myThread = threading.Thread(target=target_func, args=(5,))
             myThread.start()
         
-
+    # checks if the value b between a and c in the ring
     def in_range(self, a: int, b: int, c: int) -> bool:
         a = (a-c) % s
         b = (b-c) % s
         return b in range(a, s)
 
+    # gets the closest node that precedes the node_id from the finger table
     def closest_preceeding_node(self, node_id: int) -> NodeInfo:
         ft = self.finger_table
         for i in range(len(ft)-1, -1, -1):
@@ -164,8 +173,10 @@ class ChordNode():
                 return ft[i]
         return NodeInfo(self.node_id, self.onion_addr) # if no node in range, return self
 
+    # Creates a new network if the node is the first node named boot0, 
+    # otherwise joins the network by contacting the bootstrap node for it's successor
     def join(self, onion_addr = bootstrap_onion):
-        """Join the network"""
+        """Join the network, if the node is the first node named boot0, create the network."""
         try:
             if self.name == 'boot0':
                 self.set_successor(NodeInfo(self.node_id, self.onion_addr))
@@ -184,6 +195,7 @@ class ChordNode():
             print("join: ", e)
             return 'Failed to join the network.'
 
+    # stabilizes the network by checking if the successors predecessor is consistent and acting accordingly
     def stabilize(self) -> None:
         """Stabilize the network"""
         succ = self.get_successor()
@@ -206,6 +218,7 @@ class ChordNode():
         #notify the successor that i am its predecessor
         self.notify(succ.onion_addr)
 
+    # notifies the node with given onion_addr that we might be their predecessor
     def notify(self, onion_addr: str) -> None:
         """Notify the node"""
         try:
@@ -215,12 +228,14 @@ class ChordNode():
         finally:
             self.init_timed_stabilize()
     
+    # check if the given node is more suitable for being the predecessor and act accordingly
     def ack_notify(self, node: NodeInfo) -> None:
         """Acknowledge the notification"""
         pred = self.get_predecessor()
         if not pred or self.in_range(pred.node_id, node.node_id, self.node_id):
             self.predecessor = node
 
+    # sets our ancestor to be our successor
     def fix_successor(self) -> NodeInfo:
         """Set my self or ancestor as successor and return the new successor"""
         ft = self.finger_table
@@ -230,16 +245,16 @@ class ChordNode():
         self.set_successor(succ)
         return succ
 
+    # ask our successor for its successor and set it as our ancestor
     def fix_fingers(self) -> None:
         """Fix the fingers"""
-        ft = self.finger_table
         ancestor = services.get_ancestor(self.get_successor().onion_addr)
         if ancestor:
             ancestor = NodeInfo(**ancestor)
             if ancestor.node_id != self.node_id:
                 self.set_ancestor(ancestor)
                     
-
+    # checks if the predecessor is alive and if not, sets it to None
     def check_predecessor(self) -> None:
         """Check the predecessor"""
         pred = self.get_predecessor()
@@ -247,9 +262,9 @@ class ChordNode():
             self.predecessor = None
         self.start_timer('predecessor')
 
+    # checks if the ancestor is alive and if not, sets it to None
     def check_ancestor(self) -> None:
         """Check the ancestor"""
-        ft = self.finger_table
         succ = self.get_successor()
         if self.is_alive(succ.onion_addr):
             ancestor = services.get_ancestor(succ.onion_addr)
@@ -258,6 +273,7 @@ class ChordNode():
             self.set_ancestor(ancestor)
         self.start_timer('ancestor')
 
+    # checks if the given node is alive
     def is_alive(self, onion_addr: str) -> bool:
         """Check if the node is alive"""
         try:
@@ -266,6 +282,7 @@ class ChordNode():
             print(f'is_alive() Error: {e}')
             return False
 
+    # return the message history of the current messaging peer
     def get_msg_history(self):
         if self.current_msg_peer and self.current_msg_peer.user_id in self.msg_history:
             peer_id = self.current_msg_peer.user_id
@@ -273,6 +290,7 @@ class ChordNode():
             return msg_history
         return None
 
+    # add the given message to the message history and if the current messaging peer is the given peer, print the message
     def receive_msg(self, peer: str, msg: str):
         msg_peer = self.current_msg_peer
         if peer not in self.msg_history:
