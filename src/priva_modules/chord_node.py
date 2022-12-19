@@ -94,9 +94,15 @@ class ChordNode():
             return False
 
     def get_node_from_ft(self, node_id) -> Optional[NodeInfo]:
+        print('\n===== START FIND SUCCESSOR =====\n')
         for node_info in self.finger_table:
+            print('ft node_id = {} |||| lookup node_id = {}'.format(node_info.node_id, node_id))
             if node_info.node_id == node_id:
+                print('= Found node from fingertable')
+                print('\n===== START FIND SUCCESSOR =====\n')
                 return node_info
+        print('= Node not in fingertable')
+        print('\n===== START FIND SUCCESSOR =====\n')
         return None
 
     def node_test(self):
@@ -137,7 +143,7 @@ class ChordNode():
             self.start_stabilize_timer()
 
     def start_stabilize_timer(self):
-        myThread = threading.Thread(target=self.stabilize_timer, args=(30,))
+        myThread = threading.Thread(target=self.stabilize_timer, args=(5,))
         myThread.start()
 
     def stabilize_timer(self, sec):
@@ -152,7 +158,7 @@ class ChordNode():
     def closest_preceeding_node(self, node_id: int) -> NodeInfo:
         print('\n===== START CLOSEST PRECEEDING NODE =====\n')
         ft = self.finger_table
-        for i in range(len(ft)-1, 0, -1):
+        for i in range(len(ft)-1, -1, -1):
             if self.in_range(self.node_id, ft[i].node_id, node_id):
                 print('= Found node from finger table: {}'.format(ft[i]))
                 print('\n===== END CLOSEST PRECEEDING NODE =====\n')
@@ -192,12 +198,12 @@ class ChordNode():
             if succ_pred.node_id == self.node_id:
                 self.init_timed_stabilize()
                 return
-        # is the successors predecessor in between me and my successor
-        if succ_pred and self.in_range(self.node_id, succ_pred.node_id, succ.node_id):
-            # if so, set my successor to the successors predecessor
-            self.set_successor(succ_pred)
-            # if self.activate_stabilize_timer:
-            #     self.start_stabilize_timer()
+            # is the successors predecessor in between me and my successor
+            if self.in_range(self.node_id, succ_pred.node_id, succ.node_id):
+                # if so, set my successor to the successors predecessor
+                self.set_successor(succ_pred)
+                # if self.activate_stabilize_timer:
+                #     self.start_stabilize_timer()
         #notify the successor that i am its predecessor
         self.notify(succ.onion_addr)
 
