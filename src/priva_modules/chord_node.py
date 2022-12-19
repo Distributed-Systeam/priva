@@ -26,7 +26,6 @@ bootstrap_onion = 'kugyrejneqkjbzk6rcmjb4lanpl5wle43vxrfn7narbmrwl25lonoxyd.onio
 class ChordNode():
     def __init__(self, onion_addr):
         # basic variables
-        self.terminate_flag = threading.Event() # Flag to indicate node termination
         self.onion_addr = onion_addr
         self.next = 0
 
@@ -116,26 +115,14 @@ class ChordNode():
             successor = NodeInfo(**res)
             return successor
         return NodeInfo(self.node_id, self.onion_addr)
-        # TODO call next closest preceeding node & handle previous node in finger table somehow
 
     def init_timed_stabilize(self):
         if self.activate_stabilize_timer:
             self.start_timer('stabilize')
 
-    # def start_stabilize_timer(self):
-    #     myThread = threading.Thread(target=self.stabilize_timer, args=(5,))
-    #     myThread.start()
-
     def stabilize_timer(self, sec):
         sleep(sec)
         self.stabilize()
-
-    # def init_timed_check_predecessor(self):
-    #     self.start_check_predecessor_timer()
-    
-    # def start_check_predecessor_timer(self):
-    #     myThread = threading.Thread(target=self.check_predecessor_timer, args=(5,))
-    #     myThread.start()
 
     def check_predecessor_timer(self, sec):
         sleep(sec)
