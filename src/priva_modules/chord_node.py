@@ -123,6 +123,17 @@ class ChordNode():
         sleep(sec)
         self.stabilize()
 
+    def init_timed_check_predecessor(self):
+        self.start_check_predecessor_timer()
+    
+    def start_check_predecessor_timer(self):
+        myThread = threading.Thread(target=self.check_predecessor_timer, args=(5,))
+        myThread.start()
+
+    def check_predecessor_timer(self, sec):
+        sleep(sec)
+        self.check_predecessor()
+
     def in_range(self, a: int, b: int, c: int) -> bool:
         a = (a-c) % s
         b = (b-c) % s
@@ -203,6 +214,7 @@ class ChordNode():
         pred = self.get_predecessor()
         if pred and not self.is_alive(pred.onion_addr):
             self.predecessor = None
+        self.init_timed_check_predecessor()
 
     def is_alive(self, onion_addr: str) -> bool:
         """Check if the node is alive"""

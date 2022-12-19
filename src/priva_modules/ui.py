@@ -59,6 +59,7 @@ class UI():
 
         print(f'\nType {Fore.BLUE}help{Style.RESET_ALL} to see available commands.\n')
         self.priva_node.start_stabilize_timer()
+        self.priva_node.start_check_predecessor_timer()
         # todo: add all available commands
         help_prompt = f"""
         Usage: [command] [args]
