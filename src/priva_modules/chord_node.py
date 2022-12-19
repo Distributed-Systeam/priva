@@ -21,7 +21,7 @@ class ContactInfo:
     user_id: str
     onion_addr: str
 
-bootstrap_onion = 'h4djoqvrfnibqlqoejjbg4cmeb4ihw2kyrzqrgvtbpit7orakmpi7kqd.onion'
+bootstrap_onion = 'kugyrejneqkjbzk6rcmjb4lanpl5wle43vxrfn7narbmrwl25lonoxyd.onion'
 
 class ChordNode():
     def __init__(self, onion_addr):
@@ -62,14 +62,14 @@ class ChordNode():
 
     def node_info(self):
         print('\n=========')
-        print('name: {}'.format(self.name))
         print('user_id: {}'.format(self.user_id))
         print('node_id: {}'.format(self.node_id))
         print('onion_addr: {}'.format(self.onion_addr))
-        print('predecessor: {}'.format(self.predecessor))
-        print('successor: {}'.format(self.finger_table[0]))
-        print('current_msg_peer: {}'.format(self.current_msg_peer))
-        print('finger_table: {}'.format(self.finger_table))
+        if self.predecessor:
+            print('predecessor: {}, {}'.format(self.predecessor.node_id, self.predecessor.onion_addr))
+        else:
+            print('predecessor: None')
+        print('successor: {}, {}'.format(self.finger_table[0].node_id, self.finger_table[0].onion_addr))
         print('=========\n')
 
     def send_connect(self, tag):
