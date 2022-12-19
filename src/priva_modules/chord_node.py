@@ -21,7 +21,7 @@ class ContactInfo:
     user_id: str
     onion_addr: str
 
-bootstrap_onion = 'ikzqilpenguobd256viyj5k2tjgl42om3jhaafvzhqbosjnhjfre6oad.onion'
+bootstrap_onion = 'h4djoqvrfnibqlqoejjbg4cmeb4ihw2kyrzqrgvtbpit7orakmpi7kqd.onion'
 
 class ChordNode():
     def __init__(self, onion_addr):
@@ -69,6 +69,7 @@ class ChordNode():
         print('predecessor: {}'.format(self.predecessor))
         print('successor: {}'.format(self.finger_table[0]))
         print('current_msg_peer: {}'.format(self.current_msg_peer))
+        print('finger_table: {}'.format(self.finger_table))
         print('=========\n')
 
     def send_connect(self, tag):
@@ -90,9 +91,6 @@ class ChordNode():
             if node_info.node_id == node_id:
                 return node_info
         return None
-
-    def node_test(self):
-        print(services.test(bootstrap_onion, self.node_id))
 
     def get_predecessor(self) -> Optional[NodeInfo]:
         if self.predecessor:
@@ -118,23 +116,21 @@ class ChordNode():
             self.start_stabilize_timer()
 
     def start_stabilize_timer(self):
-        myThread = threading.Thread(target=self.stabilize_timer, args=(30,))
+        myThread = threading.Thread(target=self.stabilize_timer, args=(5,))
         myThread.start()
 
     def stabilize_timer(self, sec):
         sleep(sec)
-        print('==== STABILIZE CALLED')
         self.stabilize()
 
     def in_range(self, a: int, b: int, c: int) -> bool:
-        a = a % s
-        b = b % s
-        c = c % s
-        return b in range(a, c) or b in range(c, a)
+        a = (a-c) % s
+        b = (b-c) % s
+        return b in range(a, s)
 
     def closest_preceeding_node(self, node_id: int) -> NodeInfo:
         ft = self.finger_table
-        for i in range(len(ft)-1, 0, -1):
+        for i in range(len(ft)-1, -1, -1):
             if self.in_range(self.node_id, ft[i].node_id, node_id):
                 return ft[i]
         return NodeInfo(self.node_id, self.onion_addr) # if no node in range, return self
@@ -170,12 +166,12 @@ class ChordNode():
             if succ_pred.node_id == self.node_id:
                 self.init_timed_stabilize()
                 return
-        # is the successors predecessor in between me and my successor
-        if succ_pred and self.in_range(self.node_id, succ_pred.node_id, succ.node_id):
-            # if so, set my successor to the successors predecessor
-            self.set_successor(succ_pred)
-            # if self.activate_stabilize_timer:
-            #     self.start_stabilize_timer()
+            # is the successors predecessor in between me and my successor
+            if self.in_range(self.node_id, succ_pred.node_id, succ.node_id):
+                # if so, set my successor to the successors predecessor
+                self.set_successor(succ_pred)
+                # if self.activate_stabilize_timer:
+                #     self.start_stabilize_timer()
         #notify the successor that i am its predecessor
         self.notify(succ.onion_addr)
 
@@ -183,11 +179,9 @@ class ChordNode():
         """Notify the node"""
         try:
             services.notify(onion_addr, self.onion_addr, self.node_id)
-            print('===> SEND NOTIFY')
         except Exception as e:
             print('NOTIFY ERROR: {}'.format((e)))
         finally:
-            print('===> START STABILIZE TIMER AFTER SENDING NOTIFY REQUEST')
             self.init_timed_stabilize()
     
     def ack_notify(self, node: NodeInfo) -> None:

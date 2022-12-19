@@ -1,6 +1,7 @@
 from colorama import Fore, Style
 from priva_modules.chord_node import ChordNode
 from priva_modules import services
+from os.path import exists
 
 # tor proxies
 proxies = {
@@ -10,9 +11,9 @@ proxies = {
 
 class UI():
     def __init__(self, priva_node: ChordNode):
-        self.private_node = priva_node
+        self.priva_node = priva_node
+
     def init_ui(self):
-        priva_node = self.private_node
         # print the banner
         print("""
                     _            
@@ -42,22 +43,22 @@ class UI():
                 break
 
         # todo: call user_id generation
-        priva_node.set_node_name(username)
-        if 'boot0#' not in priva_node.user_id:
+        self.priva_node.set_node_name(username)
+        if 'boot0#' not in self.priva_node.user_id:
             print('\nJoining the network...')
-        result = priva_node.join()
+        result = self.priva_node.join()
         if result == 'Failed to join the network.':
             print(f'\n{Fore.RED}Failed to join the network. Please try again later.{Style.RESET_ALL}\n')
             return 'exited'
         # join successful
         else:
             print(f'{Fore.GREEN}{result}{Style.RESET_ALL}')
-        tag = f'{priva_node.user_id}'
+        tag = f'{self.priva_node.user_id}'
         print(f'\nYour tag is {Fore.GREEN}{tag}{Style.RESET_ALL}.')
         print(f'Start messaging with a peer by using their tag: {Fore.BLUE}connect {Fore.GREEN}username#1234{Style.RESET_ALL}.')
 
         print(f'\nType {Fore.BLUE}help{Style.RESET_ALL} to see available commands.\n')
-        priva_node.start_stabilize_timer()
+        self.priva_node.start_stabilize_timer()
         # todo: add all available commands
         help_prompt = f"""
         Usage: [command] [args]
@@ -93,9 +94,7 @@ class UI():
                 print(f'\n{Fore.GREEN}{tag}{Style.RESET_ALL}\n')
             # handle command args
             elif command == 'node_info':
-                priva_node.node_info()
-            elif command == 'node_test':
-                priva_node.node_test()
+                self.priva_node.node_info()
             elif len(command.split(' ')) > 1:
                 # handle malformed commands
                 try:
@@ -104,32 +103,41 @@ class UI():
                     if body == 'connect' and '#' in args:
                         print(f'\nConnecting...')
                         # todo: establish a connection with the peer
-                        print(f'Type {Fore.BLUE}back{Style.RESET_ALL} to exit the chat.\n')
                         # todo: logic for connection successful or not
-                        connection_successful = priva_node.send_connect(args)
+                        connection_successful = self.priva_node.send_connect(args)
                         if (connection_successful):
                             # save the contact
                             print(f'{Fore.GREEN}Connected to {args}{Style.RESET_ALL}\n')
-                            f = open('.contacts_list.txt', 'a')
-                            f.write(f'{args}\n')
-                            f.close()
+                            print(f'\nType {Fore.BLUE}back{Style.RESET_ALL} to exit the chat.\n')
+                            file_exists = exists('.contacts_list.txt')
+                            if file_exists:
+                                cl = open('.contacts_list.txt', 'r')
+                                contacts = cl.readlines()
+                                if args not in contacts:
+                                    f = open('.contacts_list.txt', 'a')
+                                    f.write(f'{args}\n')
+                                    f.close()
+                            else:
+                                f = open('.contacts_list.txt', 'a')
+                                f.write(f'{args}\n')
+                                f.close()
                             # print message history with the peer
-                            msg_history = priva_node.get_msg_history()
+                            msg_history = self.priva_node.get_msg_history()
                             if msg_history != None:
                                 for m in msg_history:
                                     print(m)
-                            while priva_node.current_msg_peer:
+                            while self.priva_node.current_msg_peer:
                                 # show user_id of the peer so that the user knows who they are messaging with atm
                                 msg = input('')
                                 if msg == 'back':
-                                    priva_node.current_msg_peer = None
+                                    self.priva_node.current_msg_peer = None
                                     break
                                 # onion_addr = priva_node.msg_conn(args)
-                                res = services.send_message(priva_node.current_msg_peer.onion_addr, tag, msg)
+                                res = services.send_message(self.priva_node.current_msg_peer.onion_addr, tag, msg)
                                 # save sent message to msg_history
                                 if res == 'message received':
-                                    priva_node.receive_msg(tag, msg)
-                                    msg_history = priva_node.get_msg_history()
+                                    self.priva_node.receive_msg(tag, msg)
+                                    msg_history = self.priva_node.get_msg_history()
                         else:
                             # todo: handle conection not successful
                             print(f'{Fore.RED}Connection failed.{Style.RESET_ALL}\n')

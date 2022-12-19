@@ -14,12 +14,6 @@ proxies = {
     'https': 'socks5h://127.0.0.1:9150'
 }
 
-def test(onion_addr: str, node_id: int):
-    try:
-        s.get('http://{}/find_successor?succ_node_id={}'.format(onion_addr, node_id), proxies=proxies).text
-    except Exception as e:
-        print('== SERVICE ** test ** ERROR: {}'.format(e))
-
 def find_successor(onion_addr: str,  self_addr: str, node_id: int):
     try:
         res = s.post('http://{}/find_successor'.format(onion_addr), json={'node_id': node_id, "onion_addr": self_addr}, proxies=proxies)
