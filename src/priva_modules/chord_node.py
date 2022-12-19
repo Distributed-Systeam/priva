@@ -51,6 +51,13 @@ class ChordNode():
         else:
             ft[0] = node
 
+    def set_ancestor(self, node: Optional[NodeInfo]):
+        ft = self.finger_table
+        if len(ft) <= 1:
+            ft.append(node)
+        else:
+            ft[1] = node
+
     def get_successor(self) -> NodeInfo:
         return self.finger_table[0]
 
@@ -237,10 +244,7 @@ class ChordNode():
         if ancestor:
             ancestor = NodeInfo(**ancestor)
             if ancestor.node_id != self.node_id:
-                if len(ft) <= 1:
-                    ft.append(ancestor)
-                else:
-                    ft[1] = ancestor
+                self.set_ancestor(ancestor)
                     
 
     def check_predecessor(self) -> None:
@@ -258,7 +262,7 @@ class ChordNode():
             ancestor = services.get_ancestor(succ.onion_addr)
             if ancestor:
                 ancestor = NodeInfo(**ancestor)
-            ft[1] = ancestor
+            self.set_ancestor(ancestor)
         self.start_timer('ancestor')
 
     def is_alive(self, onion_addr: str) -> bool:
