@@ -4,6 +4,13 @@ Decentralised P2P chat application.
 
 ## Development
 
+Clone the repository
+
+```bash
+$ git clone https://github.com/Distributed-Systeam/priva.git
+$ cd priva/
+```
+
 Spin up a python virtual environment
 
 ```bash
