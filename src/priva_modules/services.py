@@ -3,7 +3,7 @@ import json
 from requests.adapters import HTTPAdapter, Retry
 
 s = requests.Session()
-retries = Retry(total=3,
+retries = Retry(total=1,
                 backoff_factor=0.1,
                 status_forcelist=[ 500, 502, 503, 504 ])
 s.mount('http://', HTTPAdapter(max_retries=retries))
@@ -68,4 +68,12 @@ def send_connect(onion_addr: str, self_addr:str, tag: str):
         return res.json()
     except Exception as e:
         print('== SERVICE ** send_connect ** ERROR: {}'.format(e))
+        return None
+
+def get_ancestor(onion_addr: str):
+    try:
+        res = s.get('http://{}/get_ancestor'.format(onion_addr), proxies=proxies)
+        return res.json()
+    except Exception as e:
+        print('== SERVICE ** get_ancestor ** ERROR: {}'.format(e))
         return None

@@ -21,12 +21,11 @@ class ContactInfo:
     user_id: str
     onion_addr: str
 
-bootstrap_onion = 'h4djoqvrfnibqlqoejjbg4cmeb4ihw2kyrzqrgvtbpit7orakmpi7kqd.onion'
+bootstrap_onion = 'kugyrejneqkjbzk6rcmjb4lanpl5wle43vxrfn7narbmrwl25lonoxyd.onion'
 
 class ChordNode():
     def __init__(self, onion_addr):
         # basic variables
-        self.terminate_flag = threading.Event() # Flag to indicate node termination
         self.onion_addr = onion_addr
         self.next = 0
 
@@ -44,12 +43,19 @@ class ChordNode():
         self.user_id = name + '#' + str(random.randint(1, 999999))
         self.node_id = self.get_node_id(self.user_id)
 
-    def set_successor(self, node: NodeInfo):
+    def set_successor(self, node: Optional[NodeInfo]):
         ft = self.finger_table
         if len(ft) == 0:
             ft.append(node)
         else:
             ft[0] = node
+
+    def set_ancestor(self, node: Optional[NodeInfo]):
+        ft = self.finger_table
+        if len(ft) <= 1:
+            ft.append(node)
+        else:
+            ft[1] = node
 
     def get_successor(self) -> NodeInfo:
         return self.finger_table[0]
@@ -109,19 +115,36 @@ class ChordNode():
             successor = NodeInfo(**res)
             return successor
         return NodeInfo(self.node_id, self.onion_addr)
-        # TODO call next closest preceeding node & handle previous node in finger table somehow
 
     def init_timed_stabilize(self):
         if self.activate_stabilize_timer:
-            self.start_stabilize_timer()
-
-    def start_stabilize_timer(self):
-        myThread = threading.Thread(target=self.stabilize_timer, args=(5,))
-        myThread.start()
+            self.start_timer('stabilize')
 
     def stabilize_timer(self, sec):
         sleep(sec)
         self.stabilize()
+
+    def check_predecessor_timer(self, sec):
+        sleep(sec)
+        self.check_predecessor()
+
+    def check_ancestor_timer(self, sec):
+        sleep(sec)
+        self.check_ancestor()
+
+    def start_timer(self, arg):
+        target_func = None
+        if arg == 'stabilize':
+            target_func = self.stabilize_timer
+        elif arg == 'predecessor':
+            target_func = self.check_predecessor_timer
+        elif arg == 'ancestor':
+            target_func = self.check_ancestor_timer
+        
+        if target_func:
+            myThread = threading.Thread(target=target_func, args=(5,))
+            myThread.start()
+        
 
     def in_range(self, a: int, b: int, c: int) -> bool:
         a = (a-c) % s
@@ -149,6 +172,7 @@ class ChordNode():
             self.set_successor(successor)
             self.stabilize()
             self.activate_stabilize_timer = True
+            self.fix_fingers()
             return 'Joined the network.'
         except Exception as e:
             print("join: ", e)
@@ -157,6 +181,9 @@ class ChordNode():
     def stabilize(self) -> None:
         """Stabilize the network"""
         succ = self.get_successor()
+        succ_is_alive = self.is_alive(succ.onion_addr)
+        if not succ_is_alive:
+            succ = self.fix_successor()
         if succ.node_id == self.node_id:
             self.init_timed_stabilize()
             return
@@ -170,8 +197,6 @@ class ChordNode():
             if self.in_range(self.node_id, succ_pred.node_id, succ.node_id):
                 # if so, set my successor to the successors predecessor
                 self.set_successor(succ_pred)
-                # if self.activate_stabilize_timer:
-                #     self.start_stabilize_timer()
         #notify the successor that i am its predecessor
         self.notify(succ.onion_addr)
 
@@ -190,19 +215,42 @@ class ChordNode():
         if not pred or self.in_range(pred.node_id, node.node_id, self.node_id):
             self.predecessor = node
 
+    def fix_successor(self) -> NodeInfo:
+        """Set my self or ancestor as successor and return the new successor"""
+        ft = self.finger_table
+        succ = NodeInfo(self.node_id, self.onion_addr)
+        if len(ft) > 1 and ft[1]:
+            succ = ft[1]
+        self.set_successor(succ)
+        return succ
+
     def fix_fingers(self) -> None:
         """Fix the fingers"""
-        self.next = self.next + 1
-        if self.next >= m:
-            self.next = 0
-        succ_i = self.find_successor(self.node_id + 2**(self.next-1))
-        self.finger_table[self.next] = succ_i
+        ft = self.finger_table
+        ancestor = services.get_ancestor(self.get_successor().onion_addr)
+        if ancestor:
+            ancestor = NodeInfo(**ancestor)
+            if ancestor.node_id != self.node_id:
+                self.set_ancestor(ancestor)
+                    
 
     def check_predecessor(self) -> None:
         """Check the predecessor"""
         pred = self.get_predecessor()
         if pred and not self.is_alive(pred.onion_addr):
             self.predecessor = None
+        self.start_timer('predecessor')
+
+    def check_ancestor(self) -> None:
+        """Check the ancestor"""
+        ft = self.finger_table
+        succ = self.get_successor()
+        if self.is_alive(succ.onion_addr):
+            ancestor = services.get_ancestor(succ.onion_addr)
+            if ancestor:
+                ancestor = NodeInfo(**ancestor)
+            self.set_ancestor(ancestor)
+        self.start_timer('ancestor')
 
     def is_alive(self, onion_addr: str) -> bool:
         """Check if the node is alive"""

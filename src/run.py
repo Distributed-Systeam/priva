@@ -81,6 +81,13 @@ def message():
   priva_node.receive_msg(data["user_id"], data["msg"])
   return 'message received'
 
+@app.route('/get_ancestor', methods=['GET'])
+def get_ancestor():
+  successor = priva_node.get_successor()
+  if successor:
+    return json.dumps(successor.__dict__)
+  return json.dumps(None)
+
 def start_server():
   with Controller.from_port() as controller:
     global cntrl
