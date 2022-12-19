@@ -28,3 +28,8 @@ The first node in the network must be named boot0. It serves as a bootstrap node
 $ python3 src/run.py
 ```
 
+![username-selection](https://github.com/Distributed-Systeam/priva/blob/main/img/username-selection-1.png)
+
+![network-created](https://github.com/Distributed-Systeam/priva/blob/main/img/username-selection-2.png)
+
+![usage](https://github.com/Distributed-Systeam/priva/blob/main/img/usage.png)
