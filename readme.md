@@ -11,7 +11,7 @@ Spin up a python virtual environment
 $ sudo apt install python3.8-venv
 # create the virtual environment
 $ python3 -m venv venv
-# initiate the vitual environment
+# initiate the virtual environment
 $ source venv/bin/activate
 # install the requirements
 $ pip install -r requirements.txt
