@@ -80,35 +80,21 @@ class ChordNode():
         print('finger_table: {}'.format(self.finger_table))
         print('=========\n')
 
-
+    # get our successor
     def get_successor(self) -> NodeInfo:
         return self.finger_table[0]
-    
-    # finds a node in the network by their user_id and if found, add it as a messaging peer
-    def send_connect(self, tag):
-        connect_node_hash = self.get_node_id(tag)
-        successor = self.find_successor(connect_node_hash)
-        if successor.node_id == connect_node_hash:
-            res = services.send_connect(successor.onion_addr, self.onion_addr, self.user_id)
-            if res:
-                self.current_msg_peer = ContactInfo(**res)
-                return True
-            print(f'{Fore.RED} Max retries exceeded to {tag}{Style.RESET_ALL}')
-            return False
-        else:
-            print(f'{Fore.RED}{tag} is not reachable.{Style.RESET_ALL}')
-            return False
 
+    # get our predecessor
+    def get_predecessor(self) -> Optional[NodeInfo]:
+        if self.predecessor:
+            return NodeInfo(self.predecessor.node_id, self.predecessor.onion_addr)
+        return None
+    
     # checks if the node_id is in finger table and returns its node info if found
     def get_node_from_ft(self, node_id) -> Optional[NodeInfo]:
         for node_info in self.finger_table:
             if node_info.node_id == node_id:
                 return node_info
-        return None
-
-    def get_predecessor(self) -> Optional[NodeInfo]:
-        if self.predecessor:
-            return NodeInfo(self.predecessor.node_id, self.predecessor.onion_addr)
         return None
 
     # finds the successor of a node_id in the network
@@ -124,6 +110,152 @@ class ChordNode():
             successor = NodeInfo(**res)
             return successor
         return NodeInfo(self.node_id, self.onion_addr)
+        
+    # checks if the value b between a and c in the ring
+    def in_range(self, a: int, b: int, c: int) -> bool:
+        a = (a-c) % s
+        b = (b-c) % s
+        return b in range(a, s)
+
+    # gets the closest node that precedes the node_id from the finger table
+    def closest_preceeding_node(self, node_id: int) -> NodeInfo:
+        ft = self.finger_table
+        for i in range(len(ft)-1, -1, -1):
+            if self.in_range(self.node_id, ft[i].node_id, node_id):
+                return ft[i]
+        return NodeInfo(self.node_id, self.onion_addr) # if no node in range, return self
+
+    # Creates a new network if the node is the first node named boot0, 
+    # otherwise joins the network by contacting the bootstrap node for it's successor
+    def join(self, onion_addr = bootstrap_onion):
+        try:
+            if self.name == 'boot0':
+                self.set_successor(NodeInfo(self.node_id, self.onion_addr))
+                self.activate_stabilize_timer = True
+                return 'Created the network.'
+            res = services.join(onion_addr, self.onion_addr, self.node_id)
+            if not res:
+                raise Exception('Failed to join the network.')
+            successor = NodeInfo(**res)
+            self.set_successor(successor)
+            self.stabilize()
+            self.activate_stabilize_timer = True
+            self.fix_fingers()
+            return 'Joined the network.'
+        except Exception as e:
+            print("join: ", e)
+            return 'Failed to join the network.'
+
+    # stabilizes the network by checking if the successors predecessor is consistent and acting accordingly
+    def stabilize(self) -> None:
+        succ = self.get_successor()
+        succ_is_alive = self.is_alive(succ.onion_addr)
+        if not succ_is_alive:
+            succ = self.fix_successor()
+        if succ.node_id == self.node_id:
+            self.init_timed_stabilize()
+            return
+        succ_pred = services.get_predecessor(succ.onion_addr)
+        if succ_pred:
+            succ_pred = NodeInfo(**succ_pred)
+            if succ_pred.node_id == self.node_id:
+                self.init_timed_stabilize()
+                return
+            # is the successors predecessor in between me and my successor
+            if self.in_range(self.node_id, succ_pred.node_id, succ.node_id):
+                # if so, set my successor to the successors predecessor
+                self.set_successor(succ_pred)
+        #notify the successor that i am its predecessor
+        self.notify(succ.onion_addr)
+
+    # notifies the node with given onion_addr that we might be their predecessor
+    def notify(self, onion_addr: str) -> None:
+        try:
+            services.notify(onion_addr, self.onion_addr, self.node_id)
+        except Exception as e:
+            print('NOTIFY ERROR: {}'.format((e)))
+        finally:
+            self.init_timed_stabilize()
+    
+    # check if the given node is more suitable for being the predecessor and act accordingly
+    def ack_notify(self, node: NodeInfo) -> None:
+        pred = self.get_predecessor()
+        if not pred or self.in_range(pred.node_id, node.node_id, self.node_id):
+            self.predecessor = node
+
+    # sets our ancestor to be our successor
+    def fix_successor(self) -> NodeInfo:
+        ft = self.finger_table
+        succ = NodeInfo(self.node_id, self.onion_addr)
+        if len(ft) > 1 and ft[1]:
+            succ = ft[1]
+        self.set_successor(succ)
+        return succ
+
+    # ask our successor for its successor and set it as our ancestor
+    def fix_fingers(self) -> None:
+        ancestor = services.get_ancestor(self.get_successor().onion_addr)
+        if ancestor:
+            ancestor = NodeInfo(**ancestor)
+            if ancestor.node_id != self.node_id:
+                self.set_ancestor(ancestor)
+                    
+    # checks if the predecessor is alive and if not, sets it to None
+    def check_predecessor(self) -> None:
+        pred = self.get_predecessor()
+        if pred and not self.is_alive(pred.onion_addr):
+            self.predecessor = None
+        self.start_timer('predecessor')
+
+    # checks if the ancestor is alive and if not, sets it to None
+    def check_ancestor(self) -> None:
+        succ = self.get_successor()
+        if self.is_alive(succ.onion_addr):
+            ancestor = services.get_ancestor(succ.onion_addr)
+            if ancestor:
+                ancestor = NodeInfo(**ancestor)
+            self.set_ancestor(ancestor)
+        self.start_timer('ancestor')
+
+    # checks if the given node is alive
+    def is_alive(self, onion_addr: str) -> bool:
+        try:
+            return services.ping(onion_addr) == 200
+        except Exception as e:
+            print(f'is_alive() Error: {e}')
+            return False
+
+        # finds a node in the network by their user_id and if found, add it as the current messaging peer
+    def send_connect(self, tag):
+        connect_node_hash = self.get_node_id(tag)
+        successor = self.find_successor(connect_node_hash)
+        if successor.node_id == connect_node_hash:
+            res = services.send_connect(successor.onion_addr, self.onion_addr, self.user_id)
+            if res:
+                self.current_msg_peer = ContactInfo(**res)
+                return True
+            print(f'{Fore.RED} Max retries exceeded to {tag}{Style.RESET_ALL}')
+            return False
+        else:
+            print(f'{Fore.RED}{tag} is not reachable.{Style.RESET_ALL}')
+            return False
+
+    # return the message history of the current messaging peer
+    def get_msg_history(self):
+        if self.current_msg_peer and self.current_msg_peer.user_id in self.msg_history:
+            peer_id = self.current_msg_peer.user_id
+            msg_history = self.msg_history[peer_id]
+            return msg_history
+        return None
+
+    # add the given message to the message history and if the current messaging peer is the given peer, print the message
+    def receive_msg(self, peer: str, msg: str):
+        msg_peer = self.current_msg_peer
+        if peer not in self.msg_history:
+            self.msg_history[peer] = []
+        self.msg_history[peer].append(f'{peer}: {msg}')
+        if msg_peer and peer == msg_peer.user_id:
+            print(f'{Fore.BLUE}{peer}{Style.RESET_ALL}: {msg}')
 
     # starts a thread that periodically checks if the predecessor is still alive
     def init_timed_stabilize(self):
@@ -158,143 +290,3 @@ class ChordNode():
         if target_func:
             myThread = threading.Thread(target=target_func, args=(5,))
             myThread.start()
-        
-    # checks if the value b between a and c in the ring
-    def in_range(self, a: int, b: int, c: int) -> bool:
-        a = (a-c) % s
-        b = (b-c) % s
-        return b in range(a, s)
-
-    # gets the closest node that precedes the node_id from the finger table
-    def closest_preceeding_node(self, node_id: int) -> NodeInfo:
-        ft = self.finger_table
-        for i in range(len(ft)-1, -1, -1):
-            if self.in_range(self.node_id, ft[i].node_id, node_id):
-                return ft[i]
-        return NodeInfo(self.node_id, self.onion_addr) # if no node in range, return self
-
-    # Creates a new network if the node is the first node named boot0, 
-    # otherwise joins the network by contacting the bootstrap node for it's successor
-    def join(self, onion_addr = bootstrap_onion):
-        """Join the network, if the node is the first node named boot0, create the network."""
-        try:
-            if self.name == 'boot0':
-                self.set_successor(NodeInfo(self.node_id, self.onion_addr))
-                self.activate_stabilize_timer = True
-                return 'Created the network.'
-            res = services.join(onion_addr, self.onion_addr, self.node_id)
-            if not res:
-                raise Exception('Failed to join the network.')
-            successor = NodeInfo(**res)
-            self.set_successor(successor)
-            self.stabilize()
-            self.activate_stabilize_timer = True
-            self.fix_fingers()
-            return 'Joined the network.'
-        except Exception as e:
-            print("join: ", e)
-            return 'Failed to join the network.'
-
-    # stabilizes the network by checking if the successors predecessor is consistent and acting accordingly
-    def stabilize(self) -> None:
-        """Stabilize the network"""
-        succ = self.get_successor()
-        succ_is_alive = self.is_alive(succ.onion_addr)
-        if not succ_is_alive:
-            succ = self.fix_successor()
-        if succ.node_id == self.node_id:
-            self.init_timed_stabilize()
-            return
-        succ_pred = services.get_predecessor(succ.onion_addr)
-        if succ_pred:
-            succ_pred = NodeInfo(**succ_pred)
-            if succ_pred.node_id == self.node_id:
-                self.init_timed_stabilize()
-                return
-            # is the successors predecessor in between me and my successor
-            if self.in_range(self.node_id, succ_pred.node_id, succ.node_id):
-                # if so, set my successor to the successors predecessor
-                self.set_successor(succ_pred)
-        #notify the successor that i am its predecessor
-        self.notify(succ.onion_addr)
-
-    # notifies the node with given onion_addr that we might be their predecessor
-    def notify(self, onion_addr: str) -> None:
-        """Notify the node"""
-        try:
-            services.notify(onion_addr, self.onion_addr, self.node_id)
-        except Exception as e:
-            print('NOTIFY ERROR: {}'.format((e)))
-        finally:
-            self.init_timed_stabilize()
-    
-    # check if the given node is more suitable for being the predecessor and act accordingly
-    def ack_notify(self, node: NodeInfo) -> None:
-        """Acknowledge the notification"""
-        pred = self.get_predecessor()
-        if not pred or self.in_range(pred.node_id, node.node_id, self.node_id):
-            self.predecessor = node
-
-    # sets our ancestor to be our successor
-    def fix_successor(self) -> NodeInfo:
-        """Set my self or ancestor as successor and return the new successor"""
-        ft = self.finger_table
-        succ = NodeInfo(self.node_id, self.onion_addr)
-        if len(ft) > 1 and ft[1]:
-            succ = ft[1]
-        self.set_successor(succ)
-        return succ
-
-    # ask our successor for its successor and set it as our ancestor
-    def fix_fingers(self) -> None:
-        """Fix the fingers"""
-        ancestor = services.get_ancestor(self.get_successor().onion_addr)
-        if ancestor:
-            ancestor = NodeInfo(**ancestor)
-            if ancestor.node_id != self.node_id:
-                self.set_ancestor(ancestor)
-                    
-    # checks if the predecessor is alive and if not, sets it to None
-    def check_predecessor(self) -> None:
-        """Check the predecessor"""
-        pred = self.get_predecessor()
-        if pred and not self.is_alive(pred.onion_addr):
-            self.predecessor = None
-        self.start_timer('predecessor')
-
-    # checks if the ancestor is alive and if not, sets it to None
-    def check_ancestor(self) -> None:
-        """Check the ancestor"""
-        succ = self.get_successor()
-        if self.is_alive(succ.onion_addr):
-            ancestor = services.get_ancestor(succ.onion_addr)
-            if ancestor:
-                ancestor = NodeInfo(**ancestor)
-            self.set_ancestor(ancestor)
-        self.start_timer('ancestor')
-
-    # checks if the given node is alive
-    def is_alive(self, onion_addr: str) -> bool:
-        """Check if the node is alive"""
-        try:
-            return services.ping(onion_addr) == 200
-        except Exception as e:
-            print(f'is_alive() Error: {e}')
-            return False
-
-    # return the message history of the current messaging peer
-    def get_msg_history(self):
-        if self.current_msg_peer and self.current_msg_peer.user_id in self.msg_history:
-            peer_id = self.current_msg_peer.user_id
-            msg_history = self.msg_history[peer_id]
-            return msg_history
-        return None
-
-    # add the given message to the message history and if the current messaging peer is the given peer, print the message
-    def receive_msg(self, peer: str, msg: str):
-        msg_peer = self.current_msg_peer
-        if peer not in self.msg_history:
-            self.msg_history[peer] = []
-        self.msg_history[peer].append(f'{peer}: {msg}')
-        if msg_peer and peer == msg_peer.user_id:
-            print(f'{Fore.BLUE}{peer}{Style.RESET_ALL}: {msg}')
