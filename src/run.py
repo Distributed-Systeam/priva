@@ -70,7 +70,7 @@ def connect():
   if data == None:
     return 'No contact info provided'
   contact_info = chord_node.ContactInfo(**data)
-  print('GETTING CONNECT REQUEST FROM: {}'.format(contact_info))
+  print('getting connect attempt from: {}'.format(contact_info.user_id))
   return json.dumps({"user_id": priva_node.user_id, 'onion_addr': priva_node.onion_addr})
 
 @app.route('/message', methods=['POST'])

@@ -95,8 +95,6 @@ class UI():
             # handle command args
             elif command == 'node_info':
                 self.priva_node.node_info()
-            elif command == 'node_test':
-                self.priva_node.node_test()
             elif len(command.split(' ')) > 1:
                 # handle malformed commands
                 try:

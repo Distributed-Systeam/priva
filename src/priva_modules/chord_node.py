@@ -73,40 +73,24 @@ class ChordNode():
         print('=========\n')
 
     def send_connect(self, tag):
-        print('\n===== START SEND CONNECT =====\n')
         connect_node_hash = self.get_node_id(tag)
         successor = self.find_successor(connect_node_hash)
-        print('= Successor: {}'.format(successor))
         if successor.node_id == connect_node_hash:
-            print('== Successor node id == connect node id')
             res = services.send_connect(successor.onion_addr, self.onion_addr, self.user_id)
             if res:
-                print('== Got send_connect response -> Adding current msg peer from result')
                 self.current_msg_peer = ContactInfo(**res)
-                print('\n===== END SEND CONNECT =====\n')
                 return True
             print(f'{Fore.RED} Max retries exceeded to {tag}{Style.RESET_ALL}')
-            print('\n===== END SEND CONNECT =====\n')
             return False
         else:
             print(f'{Fore.RED}{tag} is not reachable.{Style.RESET_ALL}')
-            print('\n===== END SEND CONNECT =====\n')
             return False
 
     def get_node_from_ft(self, node_id) -> Optional[NodeInfo]:
-        print('\n===== START FIND SUCCESSOR =====\n')
         for node_info in self.finger_table:
-            print('ft node_id = {} |||| lookup node_id = {}'.format(node_info.node_id, node_id))
             if node_info.node_id == node_id:
-                print('= Found node from fingertable')
-                print('\n===== START FIND SUCCESSOR =====\n')
                 return node_info
-        print('= Node not in fingertable')
-        print('\n===== START FIND SUCCESSOR =====\n')
         return None
-
-    def node_test(self):
-        print(services.test(bootstrap_onion, self.node_id))
 
     def get_predecessor(self) -> Optional[NodeInfo]:
         if self.predecessor:
@@ -114,27 +98,16 @@ class ChordNode():
         return None
 
     def find_successor(self, node_id: int) -> NodeInfo:
-        print('\n===== START FIND SUCCESSOR =====\n')
         node_from_ft = self.get_node_from_ft(node_id)
         if node_from_ft:
-            print('= Found successor from Finger table: {}'.format(node_from_ft))
-            print('\n===== END FIND SUCCESSOR =====\n')
             return node_from_ft
         closest_addr = self.closest_preceeding_node(node_id).onion_addr
-        print('= Found closest address: {}'.format(closest_addr))
         if closest_addr == self.onion_addr:
-            print('== Im closest address')
-            print('\n===== END FIND SUCCESSOR =====\n')
             return NodeInfo(self.node_id, self.onion_addr)
         res = services.find_successor(closest_addr, self.onion_addr, node_id)
-        print('= Trying to find successor...')
         if res:
             successor = NodeInfo(**res)
-            print('= Found successor: {}'.format(successor))
-            print('\n===== END FIND SUCCESSOR =====\n')
             return successor
-        print('= Sending my self')
-        print('\n===== END FIND SUCCESSOR =====\n')
         return NodeInfo(self.node_id, self.onion_addr)
         # TODO call next closest preceeding node & handle previous node in finger table somehow
 
@@ -156,15 +129,10 @@ class ChordNode():
         return b in range(a, s)
 
     def closest_preceeding_node(self, node_id: int) -> NodeInfo:
-        print('\n===== START CLOSEST PRECEEDING NODE =====\n')
         ft = self.finger_table
         for i in range(len(ft)-1, -1, -1):
             if self.in_range(self.node_id, ft[i].node_id, node_id):
-                print('= Found node from finger table: {}'.format(ft[i]))
-                print('\n===== END CLOSEST PRECEEDING NODE =====\n')
                 return ft[i]
-        print('= Sending my self')
-        print('\n===== END CLOSEST PRECEEDING NODE =====\n')
         return NodeInfo(self.node_id, self.onion_addr) # if no node in range, return self
 
     def join(self, onion_addr = bootstrap_onion):
