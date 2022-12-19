@@ -21,6 +21,7 @@ class ContactInfo:
     user_id: str
     onion_addr: str
 
+# the address of the first node in the network, called boot0
 bootstrap_onion = 'kugyrejneqkjbzk6rcmjb4lanpl5wle43vxrfn7narbmrwl25lonoxyd.onion'
 
 class ChordNode():
@@ -38,11 +39,13 @@ class ChordNode():
 
         self.activate_stabilize_timer = False
 
+    # define the user_id of the node (username#123456)
     def set_node_name(self, name):
         self.name = name
         self.user_id = name + '#' + str(random.randint(1, 999999))
         self.node_id = self.get_node_id(self.user_id)
 
+    # the successor of a node is the first element in the finger table 
     def set_successor(self, node: Optional[NodeInfo]):
         ft = self.finger_table
         if len(ft) == 0:
@@ -50,6 +53,7 @@ class ChordNode():
         else:
             ft[0] = node
 
+    # the ancestor (successor's successor) of a node is the second element in the finger table
     def set_ancestor(self, node: Optional[NodeInfo]):
         ft = self.finger_table
         if len(ft) <= 1:
@@ -60,12 +64,14 @@ class ChordNode():
     def get_successor(self) -> NodeInfo:
         return self.finger_table[0]
 
+    # calculates a node_id (hash) based on the node's user_id 
     def get_node_id(self, user_id: str) -> int:
         hash = hashlib.blake2b(digest_size=m)
         hash.update(user_id.encode('utf-8'))
         node_id = int(hash.hexdigest(), 16)
         return node_id
 
+    # used by the node_info command in the ui
     def node_info(self):
         print('\n=========')
         print('name: {}'.format(self.name))
