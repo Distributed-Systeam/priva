@@ -3,7 +3,7 @@ import json
 from requests.adapters import HTTPAdapter, Retry
 
 s = requests.Session()
-retries = Retry(total=3,
+retries = Retry(total=1,
                 backoff_factor=0.1,
                 status_forcelist=[ 500, 502, 503, 504 ])
 s.mount('http://', HTTPAdapter(max_retries=retries))
