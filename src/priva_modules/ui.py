@@ -42,8 +42,9 @@ class UI():
             else:
                 break
 
-        # todo: call user_id generation
+        # create user_id for the node based on the username
         self.priva_node.set_node_name(username)
+        # the first node boot0 should not try to connect to any other node
         if 'boot0#' not in self.priva_node.user_id:
             print('\nJoining the network...')
         result = self.priva_node.join()
@@ -53,15 +54,17 @@ class UI():
         # join successful
         else:
             print(f'{Fore.GREEN}{result}{Style.RESET_ALL}')
+        # tag == user_id
         tag = f'{self.priva_node.user_id}'
+        # print visual cues for the user
         print(f'\nYour tag is {Fore.GREEN}{tag}{Style.RESET_ALL}.')
         print(f'Start messaging with a peer by using their tag: {Fore.BLUE}connect {Fore.GREEN}username#1234{Style.RESET_ALL}.')
-
         print(f'\nType {Fore.BLUE}help{Style.RESET_ALL} to see available commands.\n')
+        # start periodic chord ring health checks
         self.priva_node.start_timer('stabilize')
         self.priva_node.start_timer('predecessor')
         self.priva_node.start_timer('ancestor')
-        # todo: add all available commands
+        # list available commands
         help_prompt = f"""
         Usage: [command] [args]
         =======================
@@ -69,11 +72,13 @@ class UI():
 
         {Fore.BLUE}connect username#1234{Style.RESET_ALL} - Start messaging with the peer username#1234.
 
+        {Fore.BLUE}node_info{Style.RESET_ALL} - Show information about the node.
+
         {Fore.BLUE}list{Style.RESET_ALL} - Show your contacts list.
 
         {Fore.BLUE}tag{Style.RESET_ALL} - Show your own tag.
 
-        {Fore.BLUE}exit{Style.RESET_ALL} - Reset the tor configuration & close the application.
+        {Fore.BLUE}exit{Style.RESET_ALL} - Close the application.
 
         =======================
         """
@@ -81,8 +86,11 @@ class UI():
         # command prompt
         while True:
             command = input('priva> ')
+            # help command
             if command == 'help' or not command:
                 print(help_prompt)
+                continue
+            # list command
             if command == 'list':
                 print('\nContacts list:')
                 print('===============\n')
@@ -92,25 +100,26 @@ class UI():
                     print(f'{Fore.GREEN}{c}{Style.RESET_ALL}')
                 print('===============')
                 continue
+            # tag command
             if command == 'tag':
                 print(f'\n{Fore.GREEN}{tag}{Style.RESET_ALL}\n')
-            # handle command args
+            # node_info command
             elif command == 'node_info':
                 self.priva_node.node_info()
+            # handle command args
             elif len(command.split(' ')) > 1:
-                # handle malformed commands
                 try:
+                    # split commands into body and args
                     body = command.split(' ')[0]
                     args = command.split(' ')[1]
+                    # connect username#123456 command
                     if body == 'connect' and '#' in args:
                         print(f'\nConnecting...')
-                        # todo: establish a connection with the peer
-                        # todo: logic for connection successful or not
                         connection_successful = self.priva_node.send_connect(args)
                         if (connection_successful):
-                            # save the contact
                             print(f'{Fore.GREEN}Connected to {args}{Style.RESET_ALL}\n')
                             print(f'\nType {Fore.BLUE}back{Style.RESET_ALL} to exit the chat.\n')
+                            # save the peer into the contacts list
                             file_exists = exists('.contacts_list.txt')
                             if file_exists:
                                 cl = open('.contacts_list.txt', 'r')
@@ -123,37 +132,40 @@ class UI():
                                 f = open('.contacts_list.txt', 'a')
                                 f.write(f'{args}\n')
                                 f.close()
-                            # print message history with the peer
+                            # print message history with the peer on successful connection
                             msg_history = self.priva_node.get_msg_history()
                             if msg_history != None:
                                 for m in msg_history:
                                     print(m)
+                            # chat view with the peer
                             while self.priva_node.current_msg_peer:
-                                # show user_id of the peer so that the user knows who they are messaging with atm
                                 msg = input('')
+                                # exit the chat view
                                 if msg == 'back':
                                     self.priva_node.current_msg_peer = None
                                     break
-                                # onion_addr = priva_node.msg_conn(args)
+                                # any text written in the chat view gets sent to the peer
                                 res = services.send_message(self.priva_node.current_msg_peer.onion_addr, tag, msg)
-                                # save sent message to msg_history
+                                # save sent message to msg_history if message received
                                 if res == 'message received':
                                     self.priva_node.receive_msg(tag, msg)
                                     msg_history = self.priva_node.get_msg_history()
+                        # connection not successful
                         else:
-                            # todo: handle conection not successful
                             print(f'{Fore.RED}Connection failed.{Style.RESET_ALL}\n')
                             print(f'{Fore.GREEN}{args}{Style.RESET_ALL} might not be online.\n')
+                    # print available commands if the input hasn't been handled at his point
                     else:
                         print(help_prompt)
                         continue
                 except Exception as e:
                     print(f'{Fore.RED}Error: {e}{Style.RESET_ALL}\n')
                     continue
+            # exit command
             elif command == 'exit':
                 print('Exiting gracefully...')
-                # todo: inform the network about leaving
                 break
             else:
                 print(help_prompt)
+        # inform run.py that the UI has exited
         return 'exited'

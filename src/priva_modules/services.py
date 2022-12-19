@@ -1,5 +1,4 @@
 import requests
-import json
 from requests.adapters import HTTPAdapter, Retry
 
 s = requests.Session()
